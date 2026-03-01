@@ -35,15 +35,26 @@ function calculateOPRules() {
     let ppCura     = parseInt(document.getElementById('ppCura').value)     || 0;
     let ppPVTemp   = parseInt(document.getElementById('ppPVTemp').value)   || 0;
     let ppBloqueio = parseInt(document.getElementById('ppBloqueio').value) || 0;
-    let ppTotal    = ppDano + ppCura + ppPVTemp + ppBloqueio;
 
     // 2. Limites do Grau
     let stats = !isAuxiliar ? opDatabase.Combate[grau] : (grau >= 6 ? opDatabase.Auxiliar.Desperta : opDatabase.Auxiliar.Normal);
     let maxPPPermitido = stats.maxPP;
 
-    // --- REGRA: LIMITES DE ADIÇÃO POR GRAU ---
-    // O máximo de vezes que uma adição pode ser comprada é igual ao Grau da Técnica
-    // (ou o limite fixo do livro, se for menor).
+    // --- REGRA: LIMITES POR GRAU ---
+    // 2a. Cada campo de efeito base não pode ultrapassar maxPPPermitido
+    ['ppDano','ppCura','ppPVTemp','ppBloqueio'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.max = maxPPPermitido;
+        if (parseInt(el.value) > maxPPPermitido) el.value = maxPPPermitido;
+    });
+    // Relê após clamping
+    ppDano     = parseInt(document.getElementById('ppDano').value)     || 0;
+    ppCura     = parseInt(document.getElementById('ppCura').value)     || 0;
+    ppPVTemp   = parseInt(document.getElementById('ppPVTemp').value)   || 0;
+    ppBloqueio = parseInt(document.getElementById('ppBloqueio').value) || 0;
+
+    // 2b. Mod-mults positivos: máximo = Grau (ou limite fixo do livro, o que for menor)
     document.querySelectorAll('.mod-mult[data-type="plus"]').forEach(inp => {
         let limiteOriginal = inp.getAttribute('data-hard-max');
         if (!limiteOriginal) {
@@ -54,6 +65,8 @@ function calculateOPRules() {
         inp.max = limiteFinal;
         if (parseInt(inp.value) > limiteFinal) inp.value = limiteFinal;
     });
+
+    let ppTotal = ppDano + ppCura + ppPVTemp + ppBloqueio;
 
     // 3. CÁLCULO DE CUSTOS (PP)
     let rawCost = ppTotal;
