@@ -81,6 +81,13 @@ function calculateOPRules() {
     if(document.getElementById('chkDanoContinuo').checked) rawCost += Math.ceil(grau / 2);
     if(document.getElementById('chkDanoInsistente').checked) rawCost += Math.ceil(grau / 2);
     if(document.getElementById('chkCondArea').checked) rawCost += Math.ceil(grau / 2);
+
+    // Condições: somar PP dos dois dropdowns
+    const sel1 = document.getElementById('condicao1');
+    const sel2 = document.getElementById('condicao2');
+    const ppCond1 = sel1 ? parseInt(sel1.value) || 0 : 0;
+    const ppCond2 = sel2 ? parseInt(sel2.value) || 0 : 0;
+    rawCost += ppCond1 + ppCond2;
     
     // Correção: Cura Prolongada deve custar metade do grau
     const elCura = document.getElementById('chkCuraProlongada'); 
@@ -227,13 +234,6 @@ function calculateOPRules() {
     document.getElementById('outAlcance').innerText = textoAlcance;
 
     // Validador Rigoroso de Ataque Combinado
-    // Condições: somar PP dos dois dropdowns ao rawCost
-    const sel1 = document.getElementById('condicao1');
-    const sel2 = document.getElementById('condicao2');
-    const ppCond1 = sel1 ? parseInt(sel1.value) || 0 : 0;
-    const ppCond2 = sel2 ? parseInt(sel2.value) || 0 : 0;
-    rawCost += ppCond1 + ppCond2;
-
     // Atualizar card de Condições
     const nomeCond1 = sel1 && ppCond1 > 0 ? sel1.options[sel1.selectedIndex].text.replace(/ \(.*\)/, '') : '';
     const nomeCond2 = sel2 && ppCond2 > 0 ? sel2.options[sel2.selectedIndex].text.replace(/ \(.*\)/, '') : '';
