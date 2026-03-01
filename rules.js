@@ -155,6 +155,7 @@ function calculateOPRules() {
     document.getElementById('outCusto').innerText = `${custoFinal} PP`;
     document.getElementById('outOrigem').innerText = document.getElementById('origem')?.value || 'Geral';
     document.getElementById('outPrereq').innerText = document.getElementById('prereq').value || 'Nenhum';
+    document.getElementById('outResistencia').innerText = document.getElementById('resistencia')?.value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
     // Cálculo do Dano
