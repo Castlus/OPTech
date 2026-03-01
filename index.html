@@ -291,7 +291,58 @@
                 <div class="mod-row"><label>Aumentar Dano Fixo (+3 PP / +1 Dano, Máx +3)</label> <input type="number" id="modDanoFixo" class="mod-mult" data-type="plus" data-cost="3" min="0" max="3" value="0"></div>
                 <div class="mod-row"><label><input type="checkbox" id="chkDanoContinuo"> Dano Contínuo (+ Metade Grau)</label></div>
                 <div class="mod-row"><label><input type="checkbox" id="chkDanoInsistente"> Dano Insistente (+ Metade Grau)</label></div>
-                <div class="mod-row"><label>Custo das Condições Aplicadas</label> <input type="number" class="mod-mult" data-type="plus" data-cost="1" min="0" value="0" id="condicoesCusto"></div>
+                <div class="mod-row"><label>Condição 1</label>
+                    <select id="condicao1" class="cond-select" style="font-size:12px;padding:6px;">
+                        <option value="0">Nenhuma (0 PP)</option>
+                        <option value="1">Agarrado (+1 PP)</option>
+                        <option value="2">Amedrontado (+2 PP)</option>
+                        <option value="4">Atordoado (+4 PP)</option>
+                        <option value="1">Bêbado (+1 PP)</option>
+                        <option value="1">Caído (+1 PP)</option>
+                        <option value="2">Cego (+2 PP)</option>
+                        <option value="4">Empoderado (+4 PP)</option>
+                        <option value="2">Enfurecido (+2 PP)</option>
+                        <option value="1">Envenenado (+1 PP)</option>
+                        <option value="2">Estremecido (+2 PP)</option>
+                        <option value="2">Impedido (+2 PP)</option>
+                        <option value="2">Incapacitado (+2 PP)</option>
+                        <option value="8">Inconsciente (+8 PP)</option>
+                        <option value="5">Invisível (+5 PP)</option>
+                        <option value="2">Letárgico (+2 PP)</option>
+                        <option value="6">Paralisado (+6 PP)</option>
+                        <option value="1">Queimado (+1 PP)</option>
+                        <option value="1">Sangramento (+1 PP)</option>
+                        <option value="3">Sonolento (+3 PP)</option>
+                        <option value="2">Sufocado (+2 PP)</option>
+                        <option value="1">Surdo (+1 PP)</option>
+                    </select>
+                </div>
+                <div class="mod-row"><label>Condição 2</label>
+                    <select id="condicao2" class="cond-select" style="font-size:12px;padding:6px;">
+                        <option value="0">Nenhuma (0 PP)</option>
+                        <option value="1">Agarrado (+1 PP)</option>
+                        <option value="2">Amedrontado (+2 PP)</option>
+                        <option value="4">Atordoado (+4 PP)</option>
+                        <option value="1">Bêbado (+1 PP)</option>
+                        <option value="1">Caído (+1 PP)</option>
+                        <option value="2">Cego (+2 PP)</option>
+                        <option value="4">Empoderado (+4 PP)</option>
+                        <option value="2">Enfurecido (+2 PP)</option>
+                        <option value="1">Envenenado (+1 PP)</option>
+                        <option value="2">Estremecido (+2 PP)</option>
+                        <option value="2">Impedido (+2 PP)</option>
+                        <option value="2">Incapacitado (+2 PP)</option>
+                        <option value="8">Inconsciente (+8 PP)</option>
+                        <option value="5">Invisível (+5 PP)</option>
+                        <option value="2">Letárgico (+2 PP)</option>
+                        <option value="6">Paralisado (+6 PP)</option>
+                        <option value="1">Queimado (+1 PP)</option>
+                        <option value="1">Sangramento (+1 PP)</option>
+                        <option value="3">Sonolento (+3 PP)</option>
+                        <option value="2">Sufocado (+2 PP)</option>
+                        <option value="1">Surdo (+1 PP)</option>
+                    </select>
+                </div>
                 <div class="mod-row"><label><input type="checkbox" id="chkCondArea"> Aplicar Condição em Área (+ Metade Grau)</label></div>
             </div>
         </details>
@@ -352,6 +403,7 @@
                 <div class="stat-item"><span>Pré-req:</span> <span class="val" id="outPrereq">Nenhum</span></div>
                 <div class="stat-item"><span>Crítico:</span> <span class="val" id="outCrit">20 / x2</span></div>
                 <div class="stat-item"><span>Atq. Combinado:</span> <span class="val" id="outCombinado">Possível</span></div>
+                <div class="stat-item" style="grid-column: span 2;"><span>Condições:</span> <span class="val" id="outCondicoes">Nenhuma</span></div>
                 <div class="stat-item" style="grid-column: span 2;"><span>Colaterais:</span> <span class="val" id="outColaterais">Nenhum</span></div>
             </div>
 

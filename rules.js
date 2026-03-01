@@ -227,7 +227,24 @@ function calculateOPRules() {
     document.getElementById('outAlcance').innerText = textoAlcance;
 
     // Validador Rigoroso de Ataque Combinado
-    let hasConditions = parseInt(document.getElementById('condicoesCusto').value) > 0 || document.getElementById('chkCondArea').checked;
+    // Condições: somar PP dos dois dropdowns ao rawCost
+    const sel1 = document.getElementById('condicao1');
+    const sel2 = document.getElementById('condicao2');
+    const ppCond1 = sel1 ? parseInt(sel1.value) || 0 : 0;
+    const ppCond2 = sel2 ? parseInt(sel2.value) || 0 : 0;
+    rawCost += ppCond1 + ppCond2;
+
+    // Atualizar card de Condições
+    const nomeCond1 = sel1 && ppCond1 > 0 ? sel1.options[sel1.selectedIndex].text.replace(/ \(.*\)/, '') : '';
+    const nomeCond2 = sel2 && ppCond2 > 0 ? sel2.options[sel2.selectedIndex].text.replace(/ \(.*\)/, '') : '';
+    const nomesConds = [nomeCond1, nomeCond2].filter(Boolean);
+    const elConds = document.getElementById('outCondicoes');
+    if (elConds) {
+        elConds.innerText = nomesConds.length > 0 ? nomesConds.join(' | ') : 'Nenhuma';
+        elConds.style.color = nomesConds.length > 0 ? '#f1c40f' : '';
+    }
+
+    let hasConditions = ppCond1 > 0 || ppCond2 > 0 || document.getElementById('chkCondArea').checked;
     let isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
     
     let combinadoPossivel = false;
@@ -314,7 +331,8 @@ function calculateOPRules() {
         const isReduction = !!row.closest('details')?.querySelector('summary[style*="ff6b6b"]');
         const chk = row.querySelector('input[type="checkbox"]');
         const num = row.querySelector('input[type="number"]');
-        const isActive = (chk && chk.checked) || (num && parseInt(num.value) > 0);
+        const sel = row.querySelector('select.cond-select');
+        const isActive = (chk && chk.checked) || (num && parseInt(num.value) > 0) || (sel && parseInt(sel.value) > 0);
         row.classList.toggle('active', isActive && !isReduction);
         row.classList.toggle('active-minus', isActive && isReduction);
     });
@@ -327,6 +345,7 @@ function calculateOPRules() {
         let count = 0;
         det.querySelectorAll('input[type="checkbox"]:checked').forEach(() => count++);
         det.querySelectorAll('input[type="number"]').forEach(inp => { if (parseInt(inp.value) > 0) count++; });
+        det.querySelectorAll('select.cond-select').forEach(sel => { if (parseInt(sel.value) > 0) count++; });
         badge.textContent = count;
         badge.classList.toggle('visible', count > 0);
     });
