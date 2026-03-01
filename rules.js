@@ -188,14 +188,15 @@ function calculateOPRules() {
     document.getElementById('outResistencia').innerText = document.getElementById('resistencia')?.value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
-    // Cálculo do Dano (COM DANO FIXO)
+    // --- Cálculo do Efeito Base (Dano / Cura / PV Temp / Bloqueio) ---
     let stringDano = "Variável / Nenhum";
     const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
     const stringBonusDano = modDanoFixo > 0 ? ` + ${modDanoFixo}` : '';
+    const tipoEfeitoBase = document.getElementById('tipoEfeitoBase')?.value || 'Dano';
 
     if (ppBase > 0 && !document.getElementById('chkNaoOfensiva').checked) {
-        if (isAuxiliar) {
-            stringDano = `${ppBase}d10${stringBonusDano} (Cura) / ${ppBase}d6${stringBonusDano} (Área)`;
+        if (tipoEfeitoBase === 'Bloqueio') {
+            stringDano = `${ppBase * 2}d8${stringBonusDano} (Bloqueio de Dano)`;
         } else {
             let dado = "d10";
             if (tipoDano === "Unico") dado = (grau >= 6) ? "d12" : "d10";
@@ -204,12 +205,16 @@ function calculateOPRules() {
             if (tipoDano === "Area") dado = "d6";
             if (tipoDano === "AreaRestrita") dado = "d8";
             if (document.getElementById('chkIndomavel').checked && tipoDano === "Area") dado = "d8";
-            stringDano = `${ppBase}${dado}${stringBonusDano}`;
+            const baseText = `${ppBase}${dado}${stringBonusDano}`;
+            if (tipoEfeitoBase === 'Cura')   stringDano = `${baseText} (Cura)`;
+            else if (tipoEfeitoBase === 'PVTemp') stringDano = `${baseText} (PV Temporário)`;
+            else                                  stringDano = `${baseText} (Dano)`;
         }
     } else if (document.getElementById('chkNaoOfensiva').checked) {
         stringDano = "Não Causa Dano";
     }
     document.getElementById('outDano').innerText = stringDano;
+    document.getElementById('lblDano').innerText = "Efeito Base:";
 
     // --- Alcance e Ação (ATUALIZADO) ---
     let acaoReq = isAuxiliar ? "Ação Bônus / Reação" : "Ação Poderosa";
