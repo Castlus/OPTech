@@ -225,7 +225,6 @@ function calculateOPRules() {
     document.getElementById('outCusto').innerText = `${custoFinal} PP`;
     document.getElementById('outOrigem').innerText = document.getElementById('origem')?.value || 'Geral';
     document.getElementById('outPrereq').innerText = document.getElementById('prereq').value || 'Nenhum';
-    document.getElementById('outResistencia').innerText = document.getElementById('resistencia')?.value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
     // --- Cálculo Híbrido do Efeito Base Visual ---
@@ -338,20 +337,38 @@ function calculateOPRules() {
 
     document.getElementById('outAlcance').innerText = textoAlcance;
 
-    // --- Cálculo Oficial da CD (pág. 236) ---
-    const spanCD = document.getElementById('outCD');
+    // --- Cálculo Oficial da CD (pág. 236) e Ocultação Inteligente ---
+    const spanCD          = document.getElementById('outCD');
+    const spanResistencia = document.getElementById('outResistencia');
+    const spanCrit        = document.getElementById('outCrit');
     const testeResistencia = document.getElementById('resistencia')?.value || 'Nenhum';
-    const temSalva = tipoDano.includes('Salva') || (document.getElementById('chkCondArea')?.checked) || testeResistencia !== 'Nenhum';
-    if (spanCD) {
-        if (temSalva) {
+
+    // Exige Salva/CD se: é área, tem “Salva” no tipo, tem condições ou Teste de Resistência selecionado
+    const exigeSalva = tipoDano.includes('Salva') || tipoDano.includes('Area') ||
+                       document.getElementById('chkCondArea')?.checked ||
+                       ppCond1 > 0 || ppCond2 > 0 ||
+                       testeResistencia !== 'Nenhum';
+
+    if (spanCD && spanResistencia) {
+        if (exigeSalva) {
+            spanCD.parentElement.style.display = 'flex';
+            spanResistencia.parentElement.style.display = 'flex';
             const modAtributo = parseInt(document.getElementById('modAtributo')?.value) || 0;
             const proficiencia = parseInt(document.getElementById('proficiencia')?.value) || 0;
             const modCDExtra  = parseInt(document.getElementById('modAumentarCD')?.value) || 0;
             const cdFinal = 8 + modAtributo + proficiencia + modCDExtra;
-            spanCD.innerText = testeResistencia !== 'Nenhum' ? `${cdFinal} (${testeResistencia})` : `${cdFinal}`;
+            spanCD.innerText = testeResistencia !== 'Nenhum' ? `${cdFinal} (${testeResistencia})` : `${cdFinal} (Definir TR)`;
+            spanResistencia.innerText = testeResistencia !== 'Nenhum' ? testeResistencia : 'Definir TR';
         } else {
-            spanCD.innerText = '-';
+            spanCD.parentElement.style.display = 'none';
+            spanResistencia.parentElement.style.display = 'none';
         }
+    }
+
+    // Crítico: só visível em Jogada de Ataque com Dano ativo
+    const temDanoAtivo = ppDano > 0 && !isNaoOfensiva && !isAuxiliar;
+    if (spanCrit) {
+        spanCrit.parentElement.style.display = (tipoDano === 'Unico' && temDanoAtivo) ? 'flex' : 'none';
     }
 
     // Validador Rigoroso de Ataque Combinado
