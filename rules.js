@@ -514,10 +514,14 @@ function calculateOPRules() {
         const row = el.closest('.mod-row');
         if (row) {
             row.style.opacity = condicaoValida ? '1' : '0.35';
-            // Mantém pointer-events no row para o tooltip (title) funcionar no hover
-            // O disabled no input/checkbox/select já impede a interação
-            row.style.cursor = condicaoValida ? '' : 'not-allowed';
-            row.title = condicaoValida ? '' : tooltipMsg;
+            row.style.cursor  = condicaoValida ? '' : 'not-allowed';
+            if (condicaoValida) {
+                delete row.dataset.tooltip;
+                row.removeAttribute('tabindex');
+            } else {
+                row.dataset.tooltip = tooltipMsg;
+                row.tabIndex = 0; // torna focusável para tap no mobile
+            }
             const stepper = row.querySelector('.stepper');
             if (stepper) stepper.querySelectorAll('button').forEach(btn => btn.disabled = !condicaoValida);
         }
