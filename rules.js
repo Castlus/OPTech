@@ -408,73 +408,49 @@ function calculateOPRules() {
     document.getElementById('boxOfensivo').style.opacity = isAuxiliar ? "0.4" : "1";
     document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
 
-    // UX: Desabilitar modificadores inaplicáveis conforme formato/categoria
-    const isLinha = formatoArea === 'Linha';
+    // --- UX: Bloqueios Inteligentes de Regras ---
+    const isLinha    = formatoArea === 'Linha';
+    const isAtaque   = tipoDano === 'Unico';
+    const isCuraAtiva = document.getElementById('chkCura')?.checked || false;
+    const isDanoAtivo = document.getElementById('chkDano')?.checked || false;
 
-    // Reduzir Área: não aplicável a Linha
-    const elReduzirArea = document.getElementById('reduzirArea');
-    if (elReduzirArea) {
-        elReduzirArea.disabled = isLinha;
-        if (isLinha) { elReduzirArea.value = 0; }
-        const rowReduzir = elReduzirArea.closest('.mod-row');
-        if (rowReduzir) {
-            rowReduzir.style.opacity = isLinha ? '0.35' : '1';
-            rowReduzir.style.pointerEvents = isLinha ? 'none' : 'auto';
-            rowReduzir.title = isLinha ? 'Não aplicável a Linha (regra do sistema)' : '';
+    function toggleUX(id, condicaoValida, tooltipMsg) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = !condicaoValida;
+        if (!condicaoValida) {
+            if (el.type === 'checkbox') el.checked = false;
+            else if (el.type === 'number') el.value = 0;
+            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        }
+        const row = el.closest('.mod-row');
+        if (row) {
+            row.style.opacity = condicaoValida ? '1' : '0.35';
+            row.style.pointerEvents = condicaoValida ? 'auto' : 'none';
+            row.title = condicaoValida ? '' : tooltipMsg;
         }
     }
 
-    // Largura da Linha: apenas para Linha
-    const elLarguraLinha = document.getElementById('modLarguraLinha');
-    if (elLarguraLinha) {
-        elLarguraLinha.disabled = !isLinha;
-        if (!isLinha) { elLarguraLinha.value = 0; }
-        const rowLargura = elLarguraLinha.closest('.mod-row');
-        if (rowLargura) {
-            rowLargura.style.opacity = !isLinha ? '0.35' : '1';
-            rowLargura.style.pointerEvents = !isLinha ? 'none' : 'auto';
-            rowLargura.title = !isLinha ? 'Apenas aplicável ao formato Linha' : '';
-        }
-    }
+    // 1. Exclusivos de Linha
+    toggleUX('aumentarAlcance',  isLinha,  'Aplicável apenas ao formato de Linha');
+    toggleUX('modLarguraLinha',  isLinha,  'Aplicável apenas ao formato de Linha');
 
-    // Aumentar Área: não aplicável a Linha (use "Aumentar Alcance")
-    const elAumentarArea = document.getElementById('modAumentarArea');
-    if (elAumentarArea) {
-        elAumentarArea.disabled = isLinha;
-        if (isLinha) { elAumentarArea.value = 0; }
-        const rowAumArea = elAumentarArea.closest('.mod-row');
-        if (rowAumArea) {
-            rowAumArea.style.opacity = isLinha ? '0.35' : '1';
-            rowAumArea.style.pointerEvents = isLinha ? 'none' : 'auto';
-            rowAumArea.title = isLinha ? 'Use "Aumentar Alcance" para Linha' : '';
-        }
-    }
+    // 2. Exclusivos de Área (não Linha)
+    toggleUX('modAumentarArea',  !isLinha, 'Use "Aumentar Alcance" para o formato Linha');
+    toggleUX('reduzirArea',      !isLinha, 'Não aplicável ao formato Linha (regra do sistema)');
 
-    // Cura Prolongada: apenas para Auxiliar
-    const elCuraProlongada = document.getElementById('chkCuraProlongada');
-    if (elCuraProlongada) {
-        elCuraProlongada.disabled = !isAuxiliar;
-        if (!isAuxiliar) { elCuraProlongada.checked = false; }
-        const rowCura = elCuraProlongada.closest('.mod-row');
-        if (rowCura) {
-            rowCura.style.opacity = !isAuxiliar ? '0.35' : '1';
-            rowCura.style.pointerEvents = !isAuxiliar ? 'none' : 'auto';
-            rowCura.title = !isAuxiliar ? 'Apenas aplicável a Técnicas Auxiliares' : '';
-        }
-    }
+    // 3. Exigem Jogada de Ataque
+    toggleUX('chkAcertoAuto', isAtaque, 'Exige que a técnica faça uma Jogada de Ataque');
+    toggleUX('modAcerto',     isAtaque, 'Exige que a técnica faça uma Jogada de Ataque');
+    toggleUX('selCrit',       isAtaque, 'Exige que a técnica faça uma Jogada de Ataque');
 
-    // Técnica Rápida: apenas para Combate (não Auxiliar)
-    const elRapida = document.getElementById('chkRapida');
-    if (elRapida) {
-        elRapida.disabled = isAuxiliar;
-        if (isAuxiliar) { elRapida.checked = false; }
-        const rowRapida = elRapida.closest('.mod-row');
-        if (rowRapida) {
-            rowRapida.style.opacity = isAuxiliar ? '0.35' : '1';
-            rowRapida.style.pointerEvents = isAuxiliar ? 'none' : 'auto';
-            rowRapida.title = isAuxiliar ? 'Apenas aplicável a Técnicas de Combate' : '';
-        }
-    }
+    // 4. Dependentes do Efeito Base
+    toggleUX('chkCuraProlongada', isCuraAtiva, 'Exige que o Efeito Base de Cura esteja ativo');
+    toggleUX('chkDanoContinuo',   isDanoAtivo, 'Exige que o Efeito Base de Dano esteja ativo');
+    toggleUX('chkDanoInsistente', isDanoAtivo, 'Exige que o Efeito Base de Dano esteja ativo');
+
+    // 5. Técnica Rápida: apenas para Combate
+    toggleUX('chkRapida', !isAuxiliar, 'Técnicas Auxiliares já são conjuradas como Ação Bônus/Reação');
 
     // 5. EFEITOS COLATERAIS no Card
     const colateraisArr = [];
