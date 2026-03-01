@@ -515,13 +515,9 @@ function calculateOPRules() {
         if (row) {
             row.style.opacity = condicaoValida ? '1' : '0.35';
             row.style.cursor  = condicaoValida ? '' : 'not-allowed';
-            if (condicaoValida) {
-                delete row.dataset.tooltip;
-                row.removeAttribute('tabindex');
-            } else {
-                row.dataset.tooltip = tooltipMsg;
-                row.tabIndex = 0; // torna focusável para tap no mobile
-            }
+            // Limpa listeners antigos clonando o nó
+            if (row._uxClone) { row._uxClone = false; }
+            row._uxMsg = condicaoValida ? null : tooltipMsg;
             const stepper = row.querySelector('.stepper');
             if (stepper) stepper.querySelectorAll('button').forEach(btn => btn.disabled = !condicaoValida);
         }
@@ -986,3 +982,6 @@ function copiarParaClipboard() {
         setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2200);
     }).catch(() => alert('Erro ao copiar. Use PNG ou TXT.'));
 }
+
+// Inicializa o estado da UI no carregamento da página
+calculateOPRules();
