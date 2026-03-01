@@ -549,8 +549,12 @@ function syncEfeitosBase() {
         const inp = document.getElementById(inpId);
         const stp = document.getElementById(stpId);
         if (!chk || !inp) return;
-        inp.disabled = !chk.checked;
-        if (stp) { stp.style.opacity = chk.checked ? '1' : '.4'; stp.style.pointerEvents = chk.checked ? '' : 'none'; }
+        const enabled = chk.checked;
+        inp.disabled = !enabled;
+        if (stp) {
+            stp.style.opacity = enabled ? '1' : '.4';
+            stp.querySelectorAll('button').forEach(btn => btn.disabled = !enabled);
+        }
     });
 }
 
@@ -558,15 +562,16 @@ function syncEfeitosBase() {
 function togglePP(inputId, checkbox) {
     const inp = document.getElementById(inputId);
     if (!inp) return;
-    inp.disabled = !checkbox.checked;
-    if (!checkbox.checked) inp.value = 0;
+    const enabled = checkbox.checked;
+    inp.disabled = !enabled;
+    if (!enabled) inp.value = 0;
 
-    // Atualiza visual do stepper associado
+    // Ativa/desativa os botões e a opacidade do stepper
     const stpId = 'stp' + inputId.replace('pp', '');
     const stp = document.getElementById(stpId);
     if (stp) {
-        stp.style.opacity = checkbox.checked ? '1' : '.4';
-        stp.style.pointerEvents = checkbox.checked ? '' : 'none';
+        stp.style.opacity = enabled ? '1' : '.4';
+        stp.querySelectorAll('button').forEach(btn => btn.disabled = !enabled);
     }
     calculateOPRules();
 }

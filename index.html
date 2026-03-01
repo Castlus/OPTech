@@ -585,15 +585,15 @@
             </div>
             <div class="mod-row">
                 <label><input type="checkbox" id="chkCura" onchange="togglePP('ppCura', this)"> Restaurar PV (Cura)</label>
-                <div class="stepper" id="stpCura" style="opacity:.4;pointer-events:none"><button type="button" class="stepper__btn minus">−</button><input type="number" id="ppCura" value="0" min="0" disabled><button type="button" class="stepper__btn plus">+</button></div>
+                <div class="stepper" id="stpCura" style="opacity:.4"><button type="button" class="stepper__btn minus" onclick="stepPP('ppCura',-1)" disabled>−</button><input type="number" id="ppCura" value="0" min="0" disabled><button type="button" class="stepper__btn plus" onclick="stepPP('ppCura',1)" disabled>+</button></div>
             </div>
             <div class="mod-row">
                 <label><input type="checkbox" id="chkPVTemp" onchange="togglePP('ppPVTemp', this)"> Dar PV Temporário</label>
-                <div class="stepper" id="stpPVTemp" style="opacity:.4;pointer-events:none"><button type="button" class="stepper__btn minus">−</button><input type="number" id="ppPVTemp" value="0" min="0" disabled><button type="button" class="stepper__btn plus">+</button></div>
+                <div class="stepper" id="stpPVTemp" style="opacity:.4"><button type="button" class="stepper__btn minus" onclick="stepPP('ppPVTemp',-1)" disabled>−</button><input type="number" id="ppPVTemp" value="0" min="0" disabled><button type="button" class="stepper__btn plus" onclick="stepPP('ppPVTemp',1)" disabled>+</button></div>
             </div>
             <div class="mod-row">
                 <label><input type="checkbox" id="chkBloqueio" onchange="togglePP('ppBloqueio', this)"> Bloquear Dano (Barreira)</label>
-                <div class="stepper" id="stpBloqueio" style="opacity:.4;pointer-events:none"><button type="button" class="stepper__btn minus">−</button><input type="number" id="ppBloqueio" value="0" min="0" disabled><button type="button" class="stepper__btn plus">+</button></div>
+                <div class="stepper" id="stpBloqueio" style="opacity:.4"><button type="button" class="stepper__btn minus" onclick="stepPP('ppBloqueio',-1)" disabled>−</button><input type="number" id="ppBloqueio" value="0" min="0" disabled><button type="button" class="stepper__btn plus" onclick="stepPP('ppBloqueio',1)" disabled>+</button></div>
             </div>
         </div>
 
