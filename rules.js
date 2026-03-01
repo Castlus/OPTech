@@ -371,7 +371,7 @@ function calculateOPRules() {
 
     // Badge de origem
     const badgeEl = document.getElementById('outBadgeOrigem');
-    const badgeLabels = { 'Akuma': 'Akuma no Mi', 'Estilo': 'Estilo de Combate', 'Geral': 'Geral' };
+    const badgeLabels = { 'Akuma': '🍎 Akuma no Mi', 'Estilo': '⚔️ Estilo de Combate', 'Geral': 'Geral' };
     const badgeColors = { 'Akuma': '#9b59b6', 'Estilo': '#2980b9', 'Geral': '#27ae60' };
     badgeEl.innerText = badgeLabels[fonteTecnica] || fonteTecnica;
     badgeEl.style.background = badgeColors[fonteTecnica] || '#555';
