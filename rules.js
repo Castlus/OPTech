@@ -80,18 +80,11 @@ function calculateOPRules() {
         }
     });
 
-    // Lógica Específica de Crítico (Mutuamente Exclusiva)
-    const chkCrit19 = document.getElementById('chkCrit19');
-    const chkCrit18 = document.getElementById('chkCrit18');
-    let crit = 20;
-
-    if (chkCrit18 && chkCrit18.checked) {
-        rawCost += 3;
-        crit = 18;
-    } else if (chkCrit19 && chkCrit19.checked) {
-        rawCost += 1;
-        crit = 19;
-    }
+    // Lógica de Crítico via select
+    const selCrit = document.getElementById('selCrit');
+    const critCost = parseInt(selCrit?.value) || 0;
+    let crit = critCost === 3 ? 18 : critCost === 1 ? 19 : 20;
+    rawCost += critCost;
     document.getElementById('outCrit').innerText = `${crit} / x2`;
 
     document.querySelectorAll('.mod-mult[data-type="plus"]').forEach(inp => {
