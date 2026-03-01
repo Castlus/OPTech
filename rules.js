@@ -408,10 +408,12 @@ function calculateOPRules() {
     document.getElementById('boxOfensivo').style.opacity = isAuxiliar ? "0.4" : "1";
     document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
 
-    // UX: Desabilitar "Reduzir Área" para Linha (regra não permite)
+    // UX: Desabilitar modificadores inaplicáveis conforme formato/categoria
+    const isLinha = formatoArea === 'Linha';
+
+    // Reduzir Área: não aplicável a Linha
     const elReduzirArea = document.getElementById('reduzirArea');
     if (elReduzirArea) {
-        const isLinha = formatoArea === 'Linha';
         elReduzirArea.disabled = isLinha;
         if (isLinha) { elReduzirArea.value = 0; }
         const rowReduzir = elReduzirArea.closest('.mod-row');
@@ -419,6 +421,58 @@ function calculateOPRules() {
             rowReduzir.style.opacity = isLinha ? '0.35' : '1';
             rowReduzir.style.pointerEvents = isLinha ? 'none' : 'auto';
             rowReduzir.title = isLinha ? 'Não aplicável a Linha (regra do sistema)' : '';
+        }
+    }
+
+    // Largura da Linha: apenas para Linha
+    const elLarguraLinha = document.getElementById('modLarguraLinha');
+    if (elLarguraLinha) {
+        elLarguraLinha.disabled = !isLinha;
+        if (!isLinha) { elLarguraLinha.value = 0; }
+        const rowLargura = elLarguraLinha.closest('.mod-row');
+        if (rowLargura) {
+            rowLargura.style.opacity = !isLinha ? '0.35' : '1';
+            rowLargura.style.pointerEvents = !isLinha ? 'none' : 'auto';
+            rowLargura.title = !isLinha ? 'Apenas aplicável ao formato Linha' : '';
+        }
+    }
+
+    // Aumentar Área: não aplicável a Linha (use "Aumentar Alcance")
+    const elAumentarArea = document.getElementById('modAumentarArea');
+    if (elAumentarArea) {
+        elAumentarArea.disabled = isLinha;
+        if (isLinha) { elAumentarArea.value = 0; }
+        const rowAumArea = elAumentarArea.closest('.mod-row');
+        if (rowAumArea) {
+            rowAumArea.style.opacity = isLinha ? '0.35' : '1';
+            rowAumArea.style.pointerEvents = isLinha ? 'none' : 'auto';
+            rowAumArea.title = isLinha ? 'Use "Aumentar Alcance" para Linha' : '';
+        }
+    }
+
+    // Cura Prolongada: apenas para Auxiliar
+    const elCuraProlongada = document.getElementById('chkCuraProlongada');
+    if (elCuraProlongada) {
+        elCuraProlongada.disabled = !isAuxiliar;
+        if (!isAuxiliar) { elCuraProlongada.checked = false; }
+        const rowCura = elCuraProlongada.closest('.mod-row');
+        if (rowCura) {
+            rowCura.style.opacity = !isAuxiliar ? '0.35' : '1';
+            rowCura.style.pointerEvents = !isAuxiliar ? 'none' : 'auto';
+            rowCura.title = !isAuxiliar ? 'Apenas aplicável a Técnicas Auxiliares' : '';
+        }
+    }
+
+    // Técnica Rápida: apenas para Combate (não Auxiliar)
+    const elRapida = document.getElementById('chkRapida');
+    if (elRapida) {
+        elRapida.disabled = isAuxiliar;
+        if (isAuxiliar) { elRapida.checked = false; }
+        const rowRapida = elRapida.closest('.mod-row');
+        if (rowRapida) {
+            rowRapida.style.opacity = isAuxiliar ? '0.35' : '1';
+            rowRapida.style.pointerEvents = isAuxiliar ? 'none' : 'auto';
+            rowRapida.title = isAuxiliar ? 'Apenas aplicável a Técnicas de Combate' : '';
         }
     }
 
