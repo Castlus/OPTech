@@ -933,6 +933,10 @@ function _buildCardText() {
     const sub  = document.getElementById('outSub').innerText;
     const orig = document.getElementById('outOriginal').innerText;
     const grau = document.getElementById('outGrau').innerText;
+    const _vis = id => {
+        const el = document.getElementById(id);
+        return el && el.parentElement.style.display !== 'none';
+    };
     const stats = [
         ['Custo',          document.getElementById('outCusto').innerText],
         [document.getElementById('lblDano').innerText, document.getElementById('outDano').innerText],
@@ -940,13 +944,13 @@ function _buildCardText() {
         ['Alcance',        document.getElementById('outAlcance').innerText],
         ['Origem',         document.getElementById('outOrigem').innerText],
         ['Pré-requisito',  document.getElementById('outPrereq').innerText],
-        ['Crítico',        document.getElementById('outCrit').innerText],
+        _vis('outCrit')        ? ['Crítico',        document.getElementById('outCrit').innerText]        : null,
         ['Atq. Combinado', document.getElementById('outCombinado').innerText],
-        ['Resistência',    document.getElementById('outResistencia').innerText],
-        ['Dif. CD',        document.getElementById('outCD').innerText],
+        _vis('outResistencia') ? ['Resistência',    document.getElementById('outResistencia').innerText] : null,
+        _vis('outCD')          ? ['Dif. CD',        document.getElementById('outCD').innerText]          : null,
         ['Condições',      document.getElementById('outCondicoes').innerText],
         ['Colaterais',     document.getElementById('outColaterais').innerText],
-    ].filter(([,v]) => v && v !== '-').map(([l, v]) => `  ${(l + ':').padEnd(16)} ${v}`);
+    ].filter(row => row && row[1] && row[1] !== '-').map(([l, v]) => `  ${(l + ':').padEnd(16)} ${v}`);
     const desc = document.getElementById('outDesc').innerText;
     return [
         sep, `  ${nome}  ·  ${grau}`, `  ${sub}`,
