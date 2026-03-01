@@ -408,6 +408,20 @@ function calculateOPRules() {
     document.getElementById('boxOfensivo').style.opacity = isAuxiliar ? "0.4" : "1";
     document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
 
+    // UX: Desabilitar "Reduzir Área" para Linha (regra não permite)
+    const elReduzirArea = document.getElementById('reduzirArea');
+    if (elReduzirArea) {
+        const isLinha = formatoArea === 'Linha';
+        elReduzirArea.disabled = isLinha;
+        if (isLinha) { elReduzirArea.value = 0; }
+        const rowReduzir = elReduzirArea.closest('.mod-row');
+        if (rowReduzir) {
+            rowReduzir.style.opacity = isLinha ? '0.35' : '1';
+            rowReduzir.style.pointerEvents = isLinha ? 'none' : 'auto';
+            rowReduzir.title = isLinha ? 'Não aplicável a Linha (regra do sistema)' : '';
+        }
+    }
+
     // 5. EFEITOS COLATERAIS no Card
     const colateraisArr = [];
 
