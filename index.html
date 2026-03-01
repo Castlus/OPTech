@@ -577,12 +577,24 @@
             <div class="form-group" style="max-width: 100px;"><label>Cor do Card</label><input type="color" id="corTema" value="#5c85b3" style="height: 42px; padding: 4px;"></div>
         </div>
 
-        <label style="margin-top: 10px; display: block;">PP Investidos em Efeitos Base</label>
-        <div class="form-row" id="danoContainer">
-            <div class="form-group"><label>Dano</label><input type="number" id="ppDano" value="2" min="0"></div>
-            <div class="form-group"><label>Cura</label><input type="number" id="ppCura" value="0" min="0"></div>
-            <div class="form-group"><label>PV Temp.</label><input type="number" id="ppPVTemp" value="0" min="0"></div>
-            <div class="form-group"><label>Bloqueio</label><input type="number" id="ppBloqueio" value="0" min="0"></div>
+        <label style="margin-top: 10px; display: block;">Efeitos Base da Técnica</label>
+        <div class="details-content" id="danoContainer" style="background: var(--panel-bg2); border-radius: 8px; padding: 10px; margin-bottom: 14px; border: 1px solid var(--border-color);">
+            <div class="mod-row">
+                <label><input type="checkbox" id="chkDano" checked onchange="togglePP('ppDano', this)"> Causar Dano</label>
+                <div class="stepper"><button type="button" class="stepper__btn minus" onclick="stepPP('ppDano',-1)">−</button><input type="number" id="ppDano" value="2" min="0"><button type="button" class="stepper__btn plus" onclick="stepPP('ppDano',1)">+</button></div>
+            </div>
+            <div class="mod-row">
+                <label><input type="checkbox" id="chkCura" onchange="togglePP('ppCura', this)"> Restaurar PV (Cura)</label>
+                <div class="stepper" id="stpCura" style="opacity:.4;pointer-events:none"><button type="button" class="stepper__btn minus">−</button><input type="number" id="ppCura" value="0" min="0" disabled><button type="button" class="stepper__btn plus">+</button></div>
+            </div>
+            <div class="mod-row">
+                <label><input type="checkbox" id="chkPVTemp" onchange="togglePP('ppPVTemp', this)"> Dar PV Temporário</label>
+                <div class="stepper" id="stpPVTemp" style="opacity:.4;pointer-events:none"><button type="button" class="stepper__btn minus">−</button><input type="number" id="ppPVTemp" value="0" min="0" disabled><button type="button" class="stepper__btn plus">+</button></div>
+            </div>
+            <div class="mod-row">
+                <label><input type="checkbox" id="chkBloqueio" onchange="togglePP('ppBloqueio', this)"> Bloquear Dano (Barreira)</label>
+                <div class="stepper" id="stpBloqueio" style="opacity:.4;pointer-events:none"><button type="button" class="stepper__btn minus">−</button><input type="number" id="ppBloqueio" value="0" min="0" disabled><button type="button" class="stepper__btn plus">+</button></div>
+            </div>
         </div>
 
         <label style="margin-top: 10px; display: block;">Modificadores & Efeitos Extras</label>
@@ -753,6 +765,7 @@
         // Auto-inicializa todos os inputs numéricos nas mod-rows como steppers
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.mod-row input[type="number"]').forEach(inp => {
+                if (inp.closest('.stepper')) return; // já foi embrulhado manualmente
                 const wrapper = document.createElement('div');
                 wrapper.className = 'stepper';
                 inp.parentNode.insertBefore(wrapper, inp);

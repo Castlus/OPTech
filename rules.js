@@ -188,7 +188,7 @@ function calculateOPRules() {
     document.getElementById('outResistencia').innerText = document.getElementById('resistencia')?.value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
-    // --- Cálculo Híbrido do Efeito Base (Dano / Cura / PV Temp / Bloqueio) ---
+    // --- Cálculo Híbrido do Efeito Base Visual ---
     let efeitosArr = [];
     const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
     const stringBonusDano = modDanoFixo > 0 ? ` + ${modDanoFixo}` : '';
@@ -207,7 +207,12 @@ function calculateOPRules() {
     if (ppPVTemp   > 0)                   efeitosArr.push(`${ppPVTemp}${dado}${stringBonusDano} (PV Temp)`);
     if (ppBloqueio > 0)                   efeitosArr.push(`${ppBloqueio * 2}d8${stringBonusDano} (Bloqueio)`);
 
-    let stringDano = efeitosArr.length > 0 ? efeitosArr.join(' + ') : (isNaoOfensiva ? "Não Causa Dano" : "Nenhum");
+    let stringDano = "Nenhum";
+    if (efeitosArr.length > 0) {
+        stringDano = efeitosArr.join(' + ');
+    } else if (isNaoOfensiva) {
+        stringDano = "Não Causa Dano";
+    }
     document.getElementById('outDano').innerText = stringDano;
     document.getElementById('lblDano').innerText = "Efeito Base:";    
 
@@ -460,6 +465,7 @@ function carregarTecnica() {
                 else el.value = dados[id];
             }
         });
+        syncEfeitosBase();
         calculateOPRules(); // Recalcula a interface
     }
 }
@@ -506,10 +512,16 @@ function novaTecnica() {
     
     // Repor valores por omissão importantes
     document.getElementById('nome').value = 'Nova Técnica';
-    document.getElementById('ppDano').value    = 2;
-    document.getElementById('ppCura').value    = 0;
-    document.getElementById('ppPVTemp').value  = 0;
+    document.getElementById('ppDano').value     = 2;
+    document.getElementById('ppCura').value     = 0;
+    document.getElementById('ppPVTemp').value   = 0;
     document.getElementById('ppBloqueio').value = 0;
+    // Repor estado dos efeitos base: só Dano ativo
+    document.getElementById('chkDano').checked    = true;
+    document.getElementById('chkCura').checked    = false;
+    document.getElementById('chkPVTemp').checked  = false;
+    document.getElementById('chkBloqueio').checked = false;
+    syncEfeitosBase();
     document.getElementById('corTema').value = '#d93838';
     document.getElementById('prereq').value = 'Nenhum';
     document.getElementById('origem').value = 'Geral';
@@ -528,6 +540,47 @@ function exportarBackup() {
     link.href = URL.createObjectURL(blob);
     link.download = "Grimorio_OP_RPG.json";
     link.click();
+}
+
+// Sincroniza o estado visual dos steppers dos efeitos base com os checkboxes
+function syncEfeitosBase() {
+    [['chkCura','ppCura','stpCura'],['chkPVTemp','ppPVTemp','stpPVTemp'],['chkBloqueio','ppBloqueio','stpBloqueio']].forEach(([chkId, inpId, stpId]) => {
+        const chk = document.getElementById(chkId);
+        const inp = document.getElementById(inpId);
+        const stp = document.getElementById(stpId);
+        if (!chk || !inp) return;
+        inp.disabled = !chk.checked;
+        if (stp) { stp.style.opacity = chk.checked ? '1' : '.4'; stp.style.pointerEvents = chk.checked ? '' : 'none'; }
+    });
+}
+
+// Efeitos Base: liga/desliga PP via checkbox
+function togglePP(inputId, checkbox) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    inp.disabled = !checkbox.checked;
+    if (!checkbox.checked) inp.value = 0;
+
+    // Atualiza visual do stepper associado
+    const stpId = 'stp' + inputId.replace('pp', '');
+    const stp = document.getElementById(stpId);
+    if (stp) {
+        stp.style.opacity = checkbox.checked ? '1' : '.4';
+        stp.style.pointerEvents = checkbox.checked ? '' : 'none';
+    }
+    calculateOPRules();
+}
+
+// Stepper manual para os efeitos base (inline buttons)
+function stepPP(inputId, delta) {
+    const inp = document.getElementById(inputId);
+    if (!inp || inp.disabled) return;
+    const min = inp.min !== '' ? parseInt(inp.min) : 0;
+    const max = inp.max !== '' ? parseInt(inp.max) : Infinity;
+    const cur = parseInt(inp.value) || 0;
+    const next = Math.min(max, Math.max(min, cur + delta));
+    inp.value = next;
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 // 3. Importar Grimório (Restaurar Backup)
