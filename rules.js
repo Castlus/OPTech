@@ -99,8 +99,8 @@ function calculateOPRules() {
     });
     
     // --- Regras Dinâmicas (Adições) ---
-    // A Forma Aperfeiçoada só cobra o PP extra se a técnica for de Akuma no Mi!
-    if(document.getElementById('chkAperfeicoada').checked && fonteTecnica === 'Akuma') {
+    // A Forma Aperfeiçoada / Adaptada custa + Metade do Grau em PP
+    if(document.getElementById('chkAperfeicoada').checked) {
         rawCost += Math.floor(grau / 2);
     }
     
