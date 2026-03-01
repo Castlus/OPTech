@@ -188,11 +188,14 @@ function calculateOPRules() {
     document.getElementById('outResistencia').innerText = document.getElementById('resistencia')?.value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
-    // Cálculo do Dano
+    // Cálculo do Dano (COM DANO FIXO)
     let stringDano = "Variável / Nenhum";
+    const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
+    const stringBonusDano = modDanoFixo > 0 ? ` + ${modDanoFixo}` : '';
+
     if (ppBase > 0 && !document.getElementById('chkNaoOfensiva').checked) {
         if (isAuxiliar) {
-            stringDano = `${ppBase}d10 (Cura) / ${ppBase}d6 (Área)`;
+            stringDano = `${ppBase}d10${stringBonusDano} (Cura) / ${ppBase}d6${stringBonusDano} (Área)`;
         } else {
             let dado = "d10";
             if (tipoDano === "Unico") dado = (grau >= 6) ? "d12" : "d10";
@@ -201,7 +204,7 @@ function calculateOPRules() {
             if (tipoDano === "Area") dado = "d6";
             if (tipoDano === "AreaRestrita") dado = "d8";
             if (document.getElementById('chkIndomavel').checked && tipoDano === "Area") dado = "d8";
-            stringDano = `${ppBase}${dado}`;
+            stringDano = `${ppBase}${dado}${stringBonusDano}`;
         }
     } else if (document.getElementById('chkNaoOfensiva').checked) {
         stringDano = "Não Causa Dano";
@@ -249,12 +252,13 @@ function calculateOPRules() {
     }
 
     // Extras de mobilidade/suporte na linha de alcance
-    const modEmpurrao  = parseInt(document.getElementById('modEmpurrao')?.value) || 0;
-    const modMovimento = parseInt(document.getElementById('modMovimento')?.value) || 0;
-    const modVooExtra  = parseInt(document.getElementById('modVooExtra')?.value) || 0;
-    const modContencao = parseInt(document.getElementById('modContencao')?.value) || 0;
-    const modAcerto    = parseInt(document.getElementById('modAcerto')?.value) || 0;
-    const modDanoFixo  = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
+    const modEmpurrao      = parseInt(document.getElementById('modEmpurrao')?.value) || 0;
+    const modMovimento     = parseInt(document.getElementById('modMovimento')?.value) || 0;
+    const modVooExtra      = parseInt(document.getElementById('modVooExtra')?.value) || 0;
+    const modContencao     = parseInt(document.getElementById('modContencao')?.value) || 0;
+    const modAcerto        = parseInt(document.getElementById('modAcerto')?.value) || 0;
+    const modCDExtraVisual = parseInt(document.getElementById('modAumentarCD')?.value) || 0; // ID Corrigido!
+    const minProlongadosCard = parseInt(document.getElementById('duracaoProlongada')?.value) || 0;
 
     let extras = [];
     if (modEmpurrao  > 0) extras.push(`Empurrão ${modEmpurrao * 1.5}m`);
@@ -263,7 +267,14 @@ function calculateOPRules() {
     if (modVooExtra  > 0) extras.push(`Voo +${modVooExtra * 3}m`);
     if (modContencao > 0) extras.push(`Contenção ${modContencao * 2}d8`);
     if (modAcerto    > 0) extras.push(`Acerto +${modAcerto}`);
-    if (modDanoFixo  > 0) extras.push(`Dano Fixo +${modDanoFixo}`);
+    if (modCDExtraVisual > 0) extras.push(`CD +${modCDExtraVisual}`);
+
+    // Status de duração visível na ficha
+    if (minProlongadosCard > 0) extras.push(`Duração: ${minProlongadosCard} min`);
+    if (document.getElementById('chkCuraProlongada')?.checked) extras.push('Cura Prolongada');
+    if (document.getElementById('chkConcentracao')?.checked) extras.push('Sustentada (Conc.)');
+    // Obs: Dano Fixo já aparece na linha de Dano Principal (2d10 + 3)
+
     if (extras.length > 0) textoAlcance += ' / ' + extras.join(' / ');
 
     document.getElementById('outAlcance').innerText = textoAlcance;
