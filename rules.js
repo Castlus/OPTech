@@ -476,7 +476,9 @@ function salvarTecnica() {
 
 function atualizarDropdownTecnicas() {
     const select = document.getElementById('tecnicasSalvas');
+    const datalist = document.getElementById('listaTecnicasSalvas');
     select.innerHTML = '<option value="">-- Carregar Técnica Guardada --</option>';
+    if (datalist) datalist.innerHTML = '';
     let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
     
     Object.keys(tecnicas).forEach(nome => {
@@ -484,6 +486,11 @@ function atualizarDropdownTecnicas() {
         opt.value = nome;
         opt.innerText = nome;
         select.appendChild(opt);
+        if (datalist) {
+            let dOpt = document.createElement('option');
+            dOpt.value = nome;
+            datalist.appendChild(dOpt);
+        }
     });
 }
 

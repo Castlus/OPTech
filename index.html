@@ -614,7 +614,7 @@
             <summary>Mecânicas Gerais & Aperfeiçoamento</summary>
             <div class="details-content">
                 <div class="mod-row"><label><input type="checkbox" id="chkAperfeicoada" onchange="toggleOriginalTech()"> Forma Aperfeiçoada/Adaptada</label></div>
-            <div class="mod-row" id="divTecnicaOriginal" style="display:none; background:rgba(92,133,179,0.15); border-radius:4px; padding:4px 8px; gap:6px; align-items:center;"><label style="color:#a0b4cc; white-space:nowrap;">Técnica Original:</label><input type="text" id="nomeTecnicaOriginal" placeholder="Ex: Gomu Gomu no Pistol" style="flex:1; min-width:0; padding:4px 6px; font-size:11px;" oninput="calculateOPRules()"></div>
+            <div class="mod-row" id="divTecnicaOriginal" style="display:none; background:rgba(92,133,179,0.15); border-radius:4px; padding:4px 8px; gap:6px; align-items:center;"><label style="color:#a0b4cc; white-space:nowrap;">Técnica Original:</label><input type="text" id="nomeTecnicaOriginal" list="listaTecnicasSalvas" placeholder="Selecione ou digite..." style="flex:1; min-width:0; padding:4px 6px; font-size:11px;" oninput="calculateOPRules()"><datalist id="listaTecnicasSalvas"></datalist></div>
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="1"> Impor Desvantagem (+1 PP)</label></div>
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="1"> Conceder Vantagem (+1 PP)</label></div>
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="1" id="chkCirurgico"> Controle Cirúrgico (+1 PP)</label></div>
