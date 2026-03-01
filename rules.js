@@ -279,20 +279,35 @@ function calculateOPRules() {
     let alcanceFinalVisual = baseAlcance;
     let textoAlcance = '';
 
-    if (formatoArea === 'Linha') {
+    if (formatoArea === 'Pessoal') {
+        textoAlcance = 'Pessoal / Toque';
+    } else if (formatoArea === 'Linha') {
         alcanceFinalVisual += (inputAumentarAlcance * 6); // Regra não permite redução de comprimento na Linha
         const largura = 1.5 + (inputLarguraLinha * 1.5);
-        textoAlcance = alcanceFinalVisual === 0 ? 'Toque' : `${alcanceFinalVisual}m de comp.`;
-        if (inputLarguraLinha > 0 && alcanceFinalVisual > 0) textoAlcance += ` x ${largura}m larg.`;
-        textoAlcance += ' (Linha)';
+        if (alcanceFinalVisual <= 0) {
+            alcanceFinalVisual = 0;
+            textoAlcance = 'Pessoal / Toque';
+        } else {
+            textoAlcance = `${alcanceFinalVisual}m de comp.`;
+            if (inputLarguraLinha > 0) textoAlcance += ` x ${largura}m larg.`;
+            textoAlcance += ' (Linha)';
+        }
     } else if (formatoArea === 'Cone') {
         alcanceFinalVisual += (inputAumentarArea * 3) - (inputReduzirArea * 9);
-        if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
-        textoAlcance = `${alcanceFinalVisual}m (Cone)`;
+        if (alcanceFinalVisual <= 0) {
+            alcanceFinalVisual = 0;
+            textoAlcance = 'Pessoal / Toque';
+        } else {
+            textoAlcance = `${alcanceFinalVisual}m (Cone)`;
+        }
     } else { // Esfera ou Cilindro
         alcanceFinalVisual += (inputAumentarArea * 3) - (inputReduzirArea * 6);
-        if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
-        textoAlcance = `${alcanceFinalVisual}m de raio (${formatoArea})`;
+        if (alcanceFinalVisual <= 0) {
+            alcanceFinalVisual = 0;
+            textoAlcance = 'Pessoal / Toque';
+        } else {
+            textoAlcance = `${alcanceFinalVisual}m de raio (${formatoArea})`;
+        }
     }
 
     // Extras de mobilidade/suporte na linha de alcance
