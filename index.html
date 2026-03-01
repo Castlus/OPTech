@@ -577,20 +577,12 @@
             <div class="form-group" style="max-width: 100px;"><label>Cor do Card</label><input type="color" id="corTema" value="#5c85b3" style="height: 42px; padding: 4px;"></div>
         </div>
 
+        <label style="margin-top: 10px; display: block;">PP Investidos em Efeitos Base</label>
         <div class="form-row" id="danoContainer">
-            <div class="form-group" style="flex: 2;">
-                <label>PP Investidos no Efeito Base</label>
-                <input type="number" id="ppBase" value="2" min="0">
-            </div>
-            <div class="form-group">
-                <label>Tipo de Efeito Base</label>
-                <select id="tipoEfeitoBase" onchange="calculateOPRules()">
-                    <option value="Dano">Causar Dano</option>
-                    <option value="Cura">Restaurar PV (Cura)</option>
-                    <option value="PVTemp">Dar PV Temporário</option>
-                    <option value="Bloqueio">Bloquear Dano (Barreira)</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Dano</label><input type="number" id="ppDano" value="2" min="0"></div>
+            <div class="form-group"><label>Cura</label><input type="number" id="ppCura" value="0" min="0"></div>
+            <div class="form-group"><label>PV Temp.</label><input type="number" id="ppPVTemp" value="0" min="0"></div>
+            <div class="form-group"><label>Bloqueio</label><input type="number" id="ppBloqueio" value="0" min="0"></div>
         </div>
 
         <label style="margin-top: 10px; display: block;">Modificadores & Efeitos Extras</label>

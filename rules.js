@@ -30,19 +30,19 @@ function calculateOPRules() {
     const tipoDano = document.getElementById('tipoDano').value;
     const corTema = document.getElementById('corTema').value;
     const isAuxiliar = (categoria === 'Auxiliar');
-    let ppBase = parseInt(document.getElementById('ppBase').value) || 0;
-    
+    // 1. Capturar Dados de PP Base Híbridos
+    let ppDano     = parseInt(document.getElementById('ppDano').value)     || 0;
+    let ppCura     = parseInt(document.getElementById('ppCura').value)     || 0;
+    let ppPVTemp   = parseInt(document.getElementById('ppPVTemp').value)   || 0;
+    let ppBloqueio = parseInt(document.getElementById('ppBloqueio').value) || 0;
+    let ppTotal    = ppDano + ppCura + ppPVTemp + ppBloqueio;
+
     // 2. Limites do Grau
     let stats = !isAuxiliar ? opDatabase.Combate[grau] : (grau >= 6 ? opDatabase.Auxiliar.Desperta : opDatabase.Auxiliar.Normal);
     let maxPPPermitido = stats.maxPP;
 
-    if (ppBase > maxPPPermitido) {
-        ppBase = maxPPPermitido;
-        document.getElementById('ppBase').value = ppBase;
-    }
-
     // 3. CÁLCULO DE CUSTOS (PP)
-    let rawCost = ppBase;
+    let rawCost = ppTotal;
     const fonteTecnica = document.getElementById('fonteTecnica').value;
 
     // Modificadores Positivos Simples
@@ -168,7 +168,7 @@ function calculateOPRules() {
     
     // Regra de Ouro: O custo mínimo é 1 PP, a menos que a técnica seja truque (0 base, 0 mods)
     // Se houve algum investimento (PP > 0 ou Mods > 0), o custo final nunca pode ser menor que 1.
-    const houveInvestimento = (ppBase > 0) || (rawCost > ppBase); 
+    const houveInvestimento = (ppTotal > 0) || (rawCost > ppTotal);
 
     if (custoFinal < 1 && houveInvestimento) {
         custoFinal = 1;
@@ -188,33 +188,28 @@ function calculateOPRules() {
     document.getElementById('outResistencia').innerText = document.getElementById('resistencia')?.value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
-    // --- Cálculo do Efeito Base (Dano / Cura / PV Temp / Bloqueio) ---
-    let stringDano = "Variável / Nenhum";
+    // --- Cálculo Híbrido do Efeito Base (Dano / Cura / PV Temp / Bloqueio) ---
+    let efeitosArr = [];
     const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
     const stringBonusDano = modDanoFixo > 0 ? ` + ${modDanoFixo}` : '';
-    const tipoEfeitoBase = document.getElementById('tipoEfeitoBase')?.value || 'Dano';
+    const isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
 
-    if (ppBase > 0 && !document.getElementById('chkNaoOfensiva').checked) {
-        if (tipoEfeitoBase === 'Bloqueio') {
-            stringDano = `${ppBase * 2}d8${stringBonusDano} (Bloqueio de Dano)`;
-        } else {
-            let dado = "d10";
-            if (tipoDano === "Unico") dado = (grau >= 6) ? "d12" : "d10";
-            if (tipoDano === "UnicoSalvaNenhum") dado = "d10";
-            if (tipoDano === "UnicoSalvaMetade") dado = "d8";
-            if (tipoDano === "Area") dado = "d6";
-            if (tipoDano === "AreaRestrita") dado = "d8";
-            if (document.getElementById('chkIndomavel').checked && tipoDano === "Area") dado = "d8";
-            const baseText = `${ppBase}${dado}${stringBonusDano}`;
-            if (tipoEfeitoBase === 'Cura')   stringDano = `${baseText} (Cura)`;
-            else if (tipoEfeitoBase === 'PVTemp') stringDano = `${baseText} (PV Temporário)`;
-            else                                  stringDano = `${baseText} (Dano)`;
-        }
-    } else if (document.getElementById('chkNaoOfensiva').checked) {
-        stringDano = "Não Causa Dano";
-    }
+    let dado = "d10";
+    if (tipoDano === "Unico") dado = (grau >= 6 && !isAuxiliar) ? "d12" : "d10";
+    if (tipoDano === "UnicoSalvaNenhum") dado = "d10";
+    if (tipoDano === "UnicoSalvaMetade") dado = "d8";
+    if (tipoDano === "Area") dado = "d6";
+    if (tipoDano === "AreaRestrita") dado = "d8";
+    if (document.getElementById('chkIndomavel').checked && tipoDano === "Area") dado = "d8";
+
+    if (ppDano     > 0 && !isNaoOfensiva) efeitosArr.push(`${ppDano}${dado}${stringBonusDano} (Dano)`);
+    if (ppCura     > 0)                   efeitosArr.push(`${ppCura}${dado}${stringBonusDano} (Cura)`);
+    if (ppPVTemp   > 0)                   efeitosArr.push(`${ppPVTemp}${dado}${stringBonusDano} (PV Temp)`);
+    if (ppBloqueio > 0)                   efeitosArr.push(`${ppBloqueio * 2}d8${stringBonusDano} (Bloqueio)`);
+
+    let stringDano = efeitosArr.length > 0 ? efeitosArr.join(' + ') : (isNaoOfensiva ? "Não Causa Dano" : "Nenhum");
     document.getElementById('outDano').innerText = stringDano;
-    document.getElementById('lblDano').innerText = "Efeito Base:";
+    document.getElementById('lblDano').innerText = "Efeito Base:";    
 
     // --- Alcance e Ação (ATUALIZADO) ---
     let acaoReq = isAuxiliar ? "Ação Bônus / Reação" : "Ação Poderosa";
@@ -312,10 +307,8 @@ function calculateOPRules() {
     }
 
     let hasConditions = ppCond1 > 0 || ppCond2 > 0 || document.getElementById('chkCondArea').checked;
-    let isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
-    
     let combinadoPossivel = false;
-    if (!isAuxiliar && ppBase > 0 && !hasConditions && !isNaoOfensiva && acaoReq === "Ação Poderosa") {
+    if (!isAuxiliar && ppDano > 0 && !hasConditions && !isNaoOfensiva && acaoReq === "Ação Poderosa") {
         if(formatoArea !== 'Esfera') {
             combinadoPossivel = true;
         }
@@ -513,7 +506,10 @@ function novaTecnica() {
     
     // Repor valores por omissão importantes
     document.getElementById('nome').value = 'Nova Técnica';
-    document.getElementById('ppBase').value = 2;
+    document.getElementById('ppDano').value    = 2;
+    document.getElementById('ppCura').value    = 0;
+    document.getElementById('ppPVTemp').value  = 0;
+    document.getElementById('ppBloqueio').value = 0;
     document.getElementById('corTema').value = '#d93838';
     document.getElementById('prereq').value = 'Nenhum';
     document.getElementById('origem').value = 'Geral';
