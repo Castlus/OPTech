@@ -229,24 +229,22 @@
             padding: 2px 4px;
             transition: background 0.15s;
         }
-        /* Tooltip CSS: aparece no hover (desktop) e no foco/tap (mobile) */
-        .mod-row[data-tooltip]:hover::after,
-        .mod-row[data-tooltip]:focus::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: calc(100% + 6px);
-            left: 0; right: 0;
+        /* Tooltip flutuante global */
+        #uxTooltip {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            max-width: 260px;
             background: #1a1d28;
             color: #dde2f0;
-            font-size: 11px;
+            font-size: 11.5px;
+            font-family: 'Inter', sans-serif;
             font-weight: 400;
             line-height: 1.5;
-            padding: 7px 10px;
-            border-radius: 6px;
+            padding: 8px 12px;
+            border-radius: 7px;
             border: 1px solid #e05c6e;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-            z-index: 200;
-            white-space: normal;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.7);
             pointer-events: none;
         }
         .mod-row label {
@@ -831,6 +829,7 @@
     </div>
 
 
+    <div id="uxTooltip"></div>
     <script src="rules.js"></script>
     <script>
         // Auto-inicializa todos os inputs numéricos nas mod-rows como steppers
@@ -886,6 +885,50 @@
                 tE.classList.remove('active');
             }
         }
+
+        // --- Tooltip global para mod-rows bloqueadas ---
+        (function() {
+            const tip = document.getElementById('uxTooltip');
+            let _hide = null;
+            let _isTouch = false;
+
+            function showAt(msg, x, y) {
+                tip.textContent = msg;
+                tip.style.left = '-9999px';
+                tip.style.top  = '-9999px';
+                tip.style.display = 'block';
+                // Mede depois de tornar visível
+                const tw = tip.offsetWidth, th = tip.offsetHeight;
+                const vw = window.innerWidth, vh = window.innerHeight;
+                const left = Math.min(x + 14, vw - tw - 8);
+                // Prefere abaixo do cursor; sobe só se não couber
+                const top  = (y + 20 + th > vh) ? y - th - 10 : y + 20;
+                tip.style.left = left + 'px';
+                tip.style.top  = top  + 'px';
+            }
+            function hide() { tip.style.display = 'none'; }
+
+            // Desktop hover
+            document.addEventListener('mousemove', e => {
+                if (_isTouch) return;
+                const row = e.target.closest('.mod-row');
+                if (row && row._uxMsg) { showAt(row._uxMsg, e.clientX, e.clientY); }
+                else hide();
+            });
+
+            // Clique/tap em row bloqueada — usa pointerdown pois disabled elements não disparam click
+            document.addEventListener('pointerdown', e => {
+                const row = e.target.closest('.mod-row');
+                if (!row || !row._uxMsg) return;
+                showAt(row._uxMsg, e.clientX, e.clientY);
+                clearTimeout(_hide);
+                _hide = setTimeout(hide, 2800);
+            });
+
+            // Detecta se o dispositivo usa toque para ignorar mousemove sintético
+            document.addEventListener('touchstart', () => { _isTouch = true; }, { passive: true, once: false });
+            document.addEventListener('mousemove', () => { _isTouch = false; }, { passive: true, once: false });
+        })();
     </script>
 </body>
 </html>
