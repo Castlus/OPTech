@@ -366,6 +366,22 @@ function calculateOPRules() {
     document.querySelector('.tech-stats').style.borderLeftColor = corTema;
     document.querySelectorAll('.stat-item span:first-child').forEach(el => el.style.color = corTema);
     document.getElementById('outSub').style.color = corTema;
+    document.getElementById('cardTopBar').style.background = corTema;
+    document.getElementById('outNome').style.textShadow = `0 0 18px ${corTema}99`;
+
+    // Badge de origem
+    const badgeEl = document.getElementById('outBadgeOrigem');
+    const badgeLabels = { 'Akuma': 'Akuma no Mi', 'Estilo': 'Estilo de Combate', 'Geral': 'Geral' };
+    const badgeColors = { 'Akuma': '#9b59b6', 'Estilo': '#2980b9', 'Geral': '#27ae60' };
+    badgeEl.innerText = badgeLabels[fonteTecnica] || fonteTecnica;
+    badgeEl.style.background = badgeColors[fonteTecnica] || '#555';
+
+    // Barra de progresso de PP
+    const pct = maxPPPermitido > 0 ? Math.min(custoFinal / maxPPPermitido, 1) : 0;
+    const barColor = pct < 0.6 ? '#2ecc71' : pct < 0.9 ? '#f1c40f' : '#e74c3c';
+    document.getElementById('ppBarFill').style.width = `${pct * 100}%`;
+    document.getElementById('ppBarFill').style.background = barColor;
+    document.getElementById('ppBarLabel').innerText = `${custoFinal}/${maxPPPermitido}`;
 
     // Fonte e Fundo personalizados do Card
     const cardFonte = document.getElementById('cardFonte')?.value || 'Cinzel';
@@ -541,6 +557,19 @@ function exportImage() {
         const link = document.createElement('a');
         let nomeArquivo = document.getElementById('nome').value.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'tecnica';
         link.download = `${nomeArquivo}_oprpg.png`; link.href = canvas.toDataURL('image/png'); link.click();
+    });
+}
+
+function exportImageClaro() {
+    const card = document.getElementById('cardToExport');
+    card.classList.add('card-light');
+    html2canvas(card, { backgroundColor: '#f0efe9', scale: 3 }).then(canvas => {
+        card.classList.remove('card-light');
+        const link = document.createElement('a');
+        const nomeArq = (document.getElementById('nome').value || 'tecnica').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `${nomeArq}_oprpg_claro.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     });
 }
 
