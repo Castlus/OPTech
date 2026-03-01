@@ -168,6 +168,7 @@
 
         <div class="form-row">
             <div class="form-group"><label>Pré-requisitos</label><input type="text" id="prereq" value="Nenhum"></div>
+            <div class="form-group"><label>Origem / Estilo</label><input type="text" id="origem" value="Geral"></div>
             <div class="form-group">
                 <label>Fonte da Técnica</label>
                 <select id="fonteTecnica" onchange="calculateOPRules()">
@@ -258,9 +259,9 @@
                 <div class="mod-row"><label><input type="checkbox" id="chkDemorada"> Técnica Demorada (-3 PP)</label></div>
                 <div class="mod-row"><label>Reduzir Área (-1 PP / -6m Linha ou -9m Cone)</label> <input type="number" id="reduzirArea" class="mod-mult" data-type="minus" data-cost="1" min="0" value="0"></div>
                 <div class="mod-row"><label>Requisito Limitador (- PP livre)</label> <input type="number" id="requisitoLimitador" class="mod-mult" data-type="minus" data-cost="1" min="0" max="5" value="0"></div>
-                <div class="mod-row"><label>Téc. Exaustiva (-4 PP / Nível Exaustão)</label> <input type="number" class="mod-mult" data-type="minus" data-cost="4" min="0" max="5" value="0"></div>
-                <div class="mod-row"><label>Téc. Debilitante (-3 PP / Minuto sem PP)</label> <input type="number" class="mod-mult" data-type="minus" data-cost="3" min="0" max="2" value="0"></div>
-                <div class="mod-row"><label>Efeito Colateral Fixo (-1 PP / Ponto)</label> <input type="number" class="mod-mult" data-type="minus" data-cost="1" min="0" max="10" value="0"></div>
+                <div class="mod-row"><label>Téc. Exaustiva (-4 PP / Nível Exaustão)</label> <input type="number" id="modExaustiva" class="mod-mult" data-type="minus" data-cost="4" min="0" max="5" value="0"></div>
+                <div class="mod-row"><label>Téc. Debilitante (-3 PP / Minuto sem PP)</label> <input type="number" id="modDebilitante" class="mod-mult" data-type="minus" data-cost="3" min="0" max="2" value="0"></div>
+                <div class="mod-row"><label>Efeito Colateral Fixo (-1 PP / Ponto)</label> <input type="number" id="modColateralFixo" class="mod-mult" data-type="minus" data-cost="1" min="0" max="10" value="0"></div>
             </div>
         </details>
 

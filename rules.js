@@ -146,7 +146,7 @@ function calculateOPRules() {
     document.getElementById('outSub').innerText = isAuxiliar ? "Técnica Auxiliar" : "Técnica de Combate";
     document.getElementById('outGrau').innerText = `${grau}º GRAU`;
     document.getElementById('outCusto').innerText = `${custoFinal} PP`;
-    document.getElementById('outOrigem').innerText = document.getElementById('origem').value || 'Geral';
+    document.getElementById('outOrigem').innerText = document.getElementById('origem')?.value || 'Geral';
     document.getElementById('outPrereq').innerText = document.getElementById('prereq').value || 'Nenhum';
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
@@ -267,10 +267,10 @@ function calculateOPRules() {
     const elColaterais = document.getElementById('outColaterais');
     const colateraisList = [];
 
-    // Ler inputs de efeitos negativos
-    const nivelExaustao = parseInt(document.querySelectorAll('.mod-mult[data-type="minus"][data-cost="4"]')[0]?.value) || 0;
-    const minDebilitante = parseInt(document.querySelectorAll('.mod-mult[data-type="minus"][data-cost="3"]')[0]?.value) || 0;
-    const efeito_colateral_fixo = parseInt(document.querySelectorAll('.mod-mult[data-type="minus"][data-cost="1"]')[0]?.value) || 0;
+    // Ler inputs de efeitos negativos com IDs seguros
+    const nivelExaustao = parseInt(document.getElementById('modExaustiva')?.value) || 0;
+    const minDebilitante = parseInt(document.getElementById('modDebilitante')?.value) || 0;
+    const efeito_colateral_fixo = parseInt(document.getElementById('modColateralFixo')?.value) || 0;
 
     if(nivelExaustao > 0) colateraisList.push(`+${nivelExaustao} Nível de Exaustão`);
     if(minDebilitante > 0) colateraisList.push(`${minDebilitante} Min. sem PP`);
