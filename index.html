@@ -447,6 +447,57 @@
             .technique-card { padding: 14px; }
             .tech-stats { grid-template-columns: 1fr; }
         }
+
+        /* ── STEPPER (+/−) ── */
+        .stepper {
+            display: inline-flex;
+            align-items: stretch;
+            border: 1px solid #3a3f55;
+            border-radius: 7px;
+            overflow: hidden;
+            background: var(--bg-color);
+            flex-shrink: 0;
+        }
+        .stepper input[type="number"] {
+            width: 38px;
+            border: none !important;
+            border-left: 1px solid #3a3f55 !important;
+            border-right: 1px solid #3a3f55 !important;
+            border-radius: 0 !important;
+            text-align: center;
+            padding: 5px 2px;
+            background: transparent;
+            box-shadow: none !important;
+            font-weight: 700;
+            font-size: 13px;
+            -moz-appearance: textfield;
+        }
+        .stepper input[type="number"]::-webkit-outer-spin-button,
+        .stepper input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .stepper input[type="number"]:focus {
+            border-color: transparent !important;
+            box-shadow: none !important;
+            background: rgba(92,133,179,0.07);
+        }
+        .stepper__btn {
+            width: 28px;
+            border: none;
+            background: var(--panel-bg2);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 0 1px;
+            transition: background 0.15s, color 0.15s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .stepper__btn:hover { background: var(--primary); color: #fff; }
+        .stepper__btn:active { background: #3a5fa0; transform: scale(0.92); }
+        .stepper__btn.minus:hover { background: #6b3a4a; color: #f99; }
     </style>
 </head>
 <body>
@@ -696,6 +747,41 @@
 
     <script src="rules.js"></script>
     <script>
+        // Auto-inicializa todos os inputs numéricos nas mod-rows como steppers
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.mod-row input[type="number"]').forEach(inp => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'stepper';
+                inp.parentNode.insertBefore(wrapper, inp);
+
+                const btnMinus = document.createElement('button');
+                btnMinus.type = 'button';
+                btnMinus.className = 'stepper__btn minus';
+                btnMinus.textContent = '−';
+                btnMinus.setAttribute('aria-label', 'Diminuir');
+                btnMinus.onclick = () => {
+                    const min = inp.min !== '' ? parseInt(inp.min) : 0;
+                    const cur = parseInt(inp.value) || 0;
+                    if (cur > min) { inp.value = cur - 1; inp.dispatchEvent(new Event('input', {bubbles: true})); }
+                };
+
+                const btnPlus = document.createElement('button');
+                btnPlus.type = 'button';
+                btnPlus.className = 'stepper__btn plus';
+                btnPlus.textContent = '+';
+                btnPlus.setAttribute('aria-label', 'Aumentar');
+                btnPlus.onclick = () => {
+                    const max = inp.max !== '' ? parseInt(inp.max) : Infinity;
+                    const cur = parseInt(inp.value) || 0;
+                    if (cur < max) { inp.value = cur + 1; inp.dispatchEvent(new Event('input', {bubbles: true})); }
+                };
+
+                wrapper.appendChild(btnMinus);
+                wrapper.appendChild(inp);
+                wrapper.appendChild(btnPlus);
+            });
+        });
+
         function switchTab(tab) {
             const editor = document.getElementById('editorPanel');
             const card   = document.getElementById('cardPanel');
