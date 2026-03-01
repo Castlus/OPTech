@@ -264,29 +264,32 @@ function calculateOPRules() {
     document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
 
     // 5. EFEITOS COLATERAIS no Card
+    const colateraisArr = [];
+
+    const lvlExaustao = parseInt(document.getElementById('modExaustiva')?.value) || 0;
+    if (lvlExaustao > 0) colateraisArr.push(`+${lvlExaustao} Nível de Exaustão`);
+
+    const minSemPP = parseInt(document.getElementById('modDebilitante')?.value) || 0;
+    if (minSemPP > 0) colateraisArr.push(`Sem PP por ${minSemPP} min`);
+
+    const ppColateral = parseInt(document.getElementById('inputColateral')?.value) || 0;
+    if (ppColateral > 0) colateraisArr.push(`${ppColateral * 5} de Dano Colateral`);
+
+    if (document.getElementById('chkDependente')?.checked) colateraisArr.push('Dependente');
+    if (document.getElementById('chkIndomavel')?.checked) colateraisArr.push('Indomável');
+    if (document.getElementById('chkDevoradora')?.checked) colateraisArr.push('Devoradora');
+    if (document.getElementById('chkConcentracao')?.checked) colateraisArr.push('Conc. Crucial');
+    if (document.getElementById('chkDemorada')?.checked) colateraisArr.push('Demorada');
+
     const elColaterais = document.getElementById('outColaterais');
-    const colateraisList = [];
-
-    // Ler inputs de efeitos negativos com IDs seguros
-    const nivelExaustao = parseInt(document.getElementById('modExaustiva')?.value) || 0;
-    const minDebilitante = parseInt(document.getElementById('modDebilitante')?.value) || 0;
-    const efeito_colateral_fixo = parseInt(document.getElementById('modColateralFixo')?.value) || 0;
-
-    if(nivelExaustao > 0) colateraisList.push(`+${nivelExaustao} Nível de Exaustão`);
-    if(minDebilitante > 0) colateraisList.push(`${minDebilitante} Min. sem PP`);
-    if(efeito_colateral_fixo > 0) colateraisList.push(`${efeito_colateral_fixo * 5} de Dano Colateral`);
-    if(document.getElementById('chkDependente')?.checked) colateraisList.push('Dependente');
-    if(document.getElementById('chkIndomavel')?.checked) colateraisList.push('Indomável');
-    if(document.getElementById('chkDevoradora')?.checked) colateraisList.push('Devoradora');
-    if(document.getElementById('chkConcentracao')?.checked) colateraisList.push('Conc. Crucial');
-    if(document.getElementById('chkDemorada')?.checked) colateraisList.push('Demorada');
-
-    if(colateraisList.length > 0) {
-        elColaterais.innerText = colateraisList.join(' | ');
-        elColaterais.style.color = '#ff6b6b';
-    } else {
-        elColaterais.innerText = 'Nenhum';
-        elColaterais.style.color = '';
+    if (elColaterais) {
+        if (colateraisArr.length > 0) {
+            elColaterais.innerText = colateraisArr.join(' | ');
+            elColaterais.style.color = '#ff6b6b';
+        } else {
+            elColaterais.innerText = 'Nenhum';
+            elColaterais.style.color = '';
+        }
     }
 }
 
