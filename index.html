@@ -613,7 +613,8 @@
         <details>
             <summary>Mecânicas Gerais & Aperfeiçoamento</summary>
             <div class="details-content">
-                <div class="mod-row"><label><input type="checkbox" id="chkAperfeicoada"> Forma Aperfeiçoada/Adaptada</label></div>
+                <div class="mod-row"><label><input type="checkbox" id="chkAperfeicoada" onchange="toggleOriginalTech()"> Forma Aperfeiçoada/Adaptada</label></div>
+            <div class="mod-row" id="divTecnicaOriginal" style="display:none; background:rgba(92,133,179,0.15); border-radius:4px; padding:4px 8px; gap:6px; align-items:center;"><label style="color:#a0b4cc; white-space:nowrap;">Técnica Original:</label><input type="text" id="nomeTecnicaOriginal" placeholder="Ex: Gomu Gomu no Pistol" style="flex:1; min-width:0; padding:4px 6px; font-size:11px;" oninput="calculateOPRules()"></div>
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="1"> Impor Desvantagem (+1 PP)</label></div>
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="1"> Conceder Vantagem (+1 PP)</label></div>
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="1" id="chkCirurgico"> Controle Cirúrgico (+1 PP)</label></div>
@@ -746,7 +747,7 @@
     <div class="preview-container" id="cardPanel">
         <div class="technique-card" id="cardToExport">
             <div class="tech-header">
-                <div><h3 class="tech-title" id="outNome">GOMU GOMU NO PISTOL</h3><div class="tech-subtitle" id="outSub">Técnica de Combate</div></div>
+                <div><h3 class="tech-title" id="outNome">GOMU GOMU NO PISTOL</h3><div class="tech-subtitle" id="outSub">Técnica de Combate</div><div class="tech-subtitle" id="outOriginal" style="color:#f1c40f; margin-top:3px; font-weight:bold; font-size:11px; display:none;"></div></div>
                 <div class="tech-grau" id="outGrau">1º GRAU</div>
             </div>
             

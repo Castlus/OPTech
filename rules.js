@@ -208,6 +208,16 @@ function calculateOPRules() {
     // Dados Básicos
     document.getElementById('outNome').innerText = nome;
     document.getElementById('outSub').innerText = isAuxiliar ? "Técnica Auxiliar" : "Técnica de Combate";
+    const isAperfeicoada = document.getElementById('chkAperfeicoada').checked;
+    const nomeOriginal = (document.getElementById('nomeTecnicaOriginal')?.value || '').trim();
+    const elOriginal = document.getElementById('outOriginal');
+    if (isAperfeicoada && nomeOriginal) {
+        elOriginal.innerText = `↳ Forma Aperfeiçoada/Adaptada de: ${nomeOriginal}`;
+        elOriginal.style.display = '';
+    } else {
+        elOriginal.innerText = '';
+        elOriginal.style.display = 'none';
+    }
     document.getElementById('outGrau').innerText = `${grau}º GRAU`;
     document.getElementById('outCusto').innerText = `${custoFinal} PP`;
     document.getElementById('outOrigem').innerText = document.getElementById('origem')?.value || 'Geral';
@@ -549,6 +559,8 @@ function novaTecnica() {
     document.getElementById('chkPVTemp').checked  = false;
     document.getElementById('chkBloqueio').checked = false;
     syncEfeitosBase();
+    document.getElementById('nomeTecnicaOriginal').value = '';
+    toggleOriginalTech();
     document.getElementById('corTema').value = '#d93838';
     document.getElementById('prereq').value = 'Nenhum';
     document.getElementById('origem').value = 'Geral';
@@ -634,4 +646,12 @@ function importarBackup(event) {
     };
     reader.readAsText(file);
     event.target.value = ''; // Limpar o input de ficheiro
+}
+
+// Forma Aperfeiçoada/Adaptada
+function toggleOriginalTech() {
+    const isChecked = document.getElementById('chkAperfeicoada').checked;
+    const div = document.getElementById('divTecnicaOriginal');
+    div.style.display = isChecked ? 'flex' : 'none';
+    calculateOPRules();
 }
