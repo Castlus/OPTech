@@ -514,7 +514,9 @@ function calculateOPRules() {
         const row = el.closest('.mod-row');
         if (row) {
             row.style.opacity = condicaoValida ? '1' : '0.35';
-            row.style.pointerEvents = condicaoValida ? 'auto' : 'none';
+            // Mantém pointer-events no row para o tooltip (title) funcionar no hover
+            // O disabled no input/checkbox/select já impede a interação
+            row.style.cursor = condicaoValida ? '' : 'not-allowed';
             row.title = condicaoValida ? '' : tooltipMsg;
             const stepper = row.querySelector('.stepper');
             if (stepper) stepper.querySelectorAll('button').forEach(btn => btn.disabled = !condicaoValida);
