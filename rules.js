@@ -115,6 +115,7 @@ function calculateOPRules() {
     
     if(document.getElementById('chkIndomavel').checked) reducoes += grau;
     if(document.getElementById('chkDependente').checked) reducoes += Math.max(1, Math.floor(grau / 2));
+    if(document.getElementById('chkDemorada')?.checked) reducoes += 3;
     
     if(document.getElementById('chkNaoOfensiva').checked) {
         reducoes += isAuxiliar ? 1 : 2;
@@ -182,50 +183,48 @@ function calculateOPRules() {
     }
     document.getElementById('outAcao').innerText = acaoReq;
 
-    // Cálculo exato de Alcance (Buscando pelos IDs para evitar conflito no DOM)
-    let inputAumentarAlcance = document.getElementById('aumentarAlcance');
-    let inputReduzirArea = document.getElementById('reduzirArea');
-    
-    let alcanceAdicional = (inputAumentarAlcance ? parseInt(inputAumentarAlcance.value) || 0 : 0) * 6;
-    let alcanceReduzido = (inputReduzirArea ? parseInt(inputReduzirArea.value) || 0 : 0) * 6;
-    
-    // Adicionar Empurrão ao Alcance/Efeito? Não, Empurrão é efeito. Alcance é alcance.
-    // Mas "Aumentar Área" e "Largura da Linha" alteram a geometria.
-    // Vamos calcular o alcance base + extras.
-    
-    let alcanceCalculado = 0;
-    if(stats) {
-        alcanceCalculado = stats[formatoArea.toLowerCase()] || 0;
-    }
-    
-    // Modificador de Alcance (+6m por ponto)
+    // Cálculo de Alcance
+    let alcanceCalculado = stats ? (stats[formatoArea.toLowerCase()] || 0) : 0;
     alcanceCalculado += (parseInt(document.getElementById('aumentarAlcance').value) || 0) * 6;
     
-    let textoAlcance = `${alcanceCalculado}m (${formatoArea})`;
+    // Reduzir Área aplica no alcance para Linha e Cone
+    const reduzirAreaVal = parseInt(document.getElementById('reduzirArea')?.value) || 0;
+    if (formatoArea === 'Linha') alcanceCalculado -= reduzirAreaVal * 6;
+    if (formatoArea === 'Cone') alcanceCalculado -= reduzirAreaVal * 9;
+    if (alcanceCalculado < 0) alcanceCalculado = 0;
     
-    // Detalhes extras de geometria
-    const modEmpurrao = parseInt(document.getElementById('modEmpurrao').value) || 0;
-    const modLargura = parseInt(document.getElementById('modLarguraLinha').value) || 0;
-    const modArea = parseInt(document.getElementById('modAumentarArea').value) || 0;
+    let textoAlcance = alcanceCalculado === 0 && formatoArea === 'Linha' ? 'Toque' : `${alcanceCalculado}m (${formatoArea})`;
+    
+    // Extras de geometria
+    const modEmpurrao = parseInt(document.getElementById('modEmpurrao')?.value) || 0;
+    const modLargura = parseInt(document.getElementById('modLarguraLinha')?.value) || 0;
+    const modArea = parseInt(document.getElementById('modAumentarArea')?.value) || 0;
+    const modMovimento = parseInt(document.getElementById('modMovimento')?.value) || 0;
+    const modVooExtra = parseInt(document.getElementById('modVooExtra')?.value) || 0;
+    const modContencao = parseInt(document.getElementById('modContencao')?.value) || 0;
+    const modAcerto = parseInt(document.getElementById('modAcerto')?.value) || 0;
+    const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
+    const modCD = parseInt(document.getElementById('modCD')?.value) || 0;
 
     let extras = [];
     if(modEmpurrao > 0) extras.push(`Empurrão ${modEmpurrao * 1.5}m`);
     if(modLargura > 0) extras.push(`Largura +${modLargura * 1.5}m`);
-    if(modArea > 0) extras.push(`Área +${modArea * 1.5}m`);
-
-    if(extras.length > 0) {
-        textoAlcance += " / " + extras.join(" / ");
+    // Área: Cone +3m/ponto, Esfera/Cilindro +1,5m/ponto
+    if(modArea > 0) {
+        const areaGanho = formatoArea === 'Cone' ? modArea * 3 : modArea * 1.5;
+        extras.push(`Área +${areaGanho}m`);
     }
+    if(modMovimento > 0) extras.push(`Mov. +${modMovimento * 3}m`);
+    if(document.getElementById('chkVooBase')?.checked) extras.push('Voo Base');
+    if(modVooExtra > 0) extras.push(`Voo +${modVooExtra * 3}m`);
+    if(modContencao > 0) extras.push(`Contenção ${modContencao * 2}d8`);
+    if(modAcerto > 0) extras.push(`Acerto +${modAcerto}`);
+    if(modDanoFixo > 0) extras.push(`Dano Fixo +${modDanoFixo}`);
+    if(modCD > 0) extras.push(`CD +${modCD}`);
+
+    if(extras.length > 0) textoAlcance += ' / ' + extras.join(' / ');
     
-    if (alcanceCalculado <= 0 && formatoArea === 'Linha') textoAlcance = "Toque";
     document.getElementById('outAlcance').innerText = textoAlcance;
-
-    // ... (rest of function)
-
-    // Crítico (already declared and set above)
-    if(document.getElementById('chkCrit19').checked) crit = 19;
-    if(document.getElementById('chkCrit18').checked) crit = 18;
-    document.getElementById('outCrit').innerText = `${crit} / x2`;
 
     // Validador Rigoroso de Ataque Combinado
     let hasConditions = parseInt(document.getElementById('condicoesCusto').value) > 0 || document.getElementById('chkCondArea').checked;
