@@ -664,23 +664,25 @@ function toggleOriginalTech() {
 }
 
 // Puxar os dados da técnica original para facilitar a evolução
+let _importBaseGuard = false;
 function importarEstatisticasDaBase(nomeBase) {
-    if (!nomeBase) return;
+    if (!nomeBase || _importBaseGuard) return;
     let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
     let dados = tecnicas[nomeBase];
-    if (dados) {
-        if (confirm(`Deseja carregar os atributos base de "${nomeBase}" para começar a sua Forma Aperfeiçoada/Adaptada?\n\n(O seu Nome Atual, Grau e a marcação de Forma Aperfeiçoada não serão alterados).`)) {
-            const protegidos = new Set(['nome', 'grau', 'chkAperfeicoada', 'nomeTecnicaOriginal', 'tecnicasSalvas']);
-            Object.keys(dados).forEach(id => {
-                if (protegidos.has(id)) return;
-                let el = document.getElementById(id);
-                if (el) {
-                    if (el.type === 'checkbox') el.checked = dados[id];
-                    else el.value = dados[id];
-                }
-            });
-            syncEfeitosBase();
-            calculateOPRules();
-        }
+    if (!dados) return;
+    _importBaseGuard = true;
+    setTimeout(() => { _importBaseGuard = false; }, 600);
+    if (confirm(`Deseja carregar os atributos base de "${nomeBase}" para começar a sua Forma Aperfeiçoada/Adaptada?\n\n(O seu Nome Atual, Grau e a marcação de Forma Aperfeiçoada não serão alterados).`)) {
+        const protegidos = new Set(['nome', 'grau', 'chkAperfeicoada', 'nomeTecnicaOriginal', 'tecnicasSalvas']);
+        Object.keys(dados).forEach(id => {
+            if (protegidos.has(id)) return;
+            let el = document.getElementById(id);
+            if (el) {
+                if (el.type === 'checkbox') el.checked = dados[id];
+                else el.value = dados[id];
+            }
+        });
+        syncEfeitosBase();
+        calculateOPRules();
     }
 }
