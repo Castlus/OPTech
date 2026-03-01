@@ -80,7 +80,37 @@ function calculateOPRules() {
     if(document.getElementById('chkRapida').checked) rawCost += grau;
     if(document.getElementById('chkDanoContinuo').checked) rawCost += Math.ceil(grau / 2);
     if(document.getElementById('chkDanoInsistente').checked) rawCost += Math.ceil(grau / 2);
-    if(document.getElementById('chkCondArea').checked) rawCost += Math.ceil(grau / 2);
+    // --- Cálculo Rigoroso de Condição em Área ---
+    if (document.getElementById('chkCondArea') && document.getElementById('chkCondArea').checked) {
+        let grauCondicao = grau;
+
+        // Verifica se a área foi modificada
+        const inputsArea = document.querySelectorAll('#modAumentarArea, #reduzirArea');
+        const areaModificada = Array.from(inputsArea).some(inp => parseInt(inp.value) > 0);
+
+        if (isAuxiliar || areaModificada) {
+            const alcanceReferencia = stats[formatoArea.toLowerCase()] || 0;
+            const bonusArea  = (parseInt(document.getElementById('modAumentarArea')?.value) || 0) * (formatoArea === 'Cone' ? 3 : 1.5);
+            const reducaoArea = (parseInt(document.getElementById('reduzirArea')?.value)    || 0) * (formatoArea === 'Cone' ? 9 : 6);
+            const alcanceFinal = alcanceReferencia + bonusArea - reducaoArea;
+
+            let grauMaisProximo = 1;
+            let menorDiferenca = Infinity;
+            for (let g of Object.keys(opDatabase.Combate)) {
+                const dif = Math.abs((opDatabase.Combate[g][formatoArea.toLowerCase()] || 0) - alcanceFinal);
+                if (dif <= menorDiferenca) {
+                    grauMaisProximo = parseInt(g);
+                    menorDiferenca = dif;
+                }
+            }
+            grauCondicao = grauMaisProximo;
+        }
+
+        // 0 PP para 1º Grau; metade arredondada para cima nos restantes
+        if (grauCondicao > 1) {
+            rawCost += Math.ceil(grauCondicao / 2);
+        }
+    }
 
     // Condições: somar PP dos dois dropdowns
     const sel1 = document.getElementById('condicao1');
