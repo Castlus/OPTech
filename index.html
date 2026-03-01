@@ -114,6 +114,70 @@
         .status-msg { margin-top: 15px; font-size: 13px; font-weight: bold; padding: 10px; border-radius: 4px; display: none;}
         .msg-error { background-color: rgba(217, 56, 56, 0.2); color: #ff6b6b; border: 1px solid #ff6b6b; display: block;}
         .msg-ok { background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; display: block;}
+
+        /* === MELHORIAS VISUAlS DINÂMICAS === */
+
+        /* Animação de pulso no card ao recalcular */
+        @keyframes cardPulse {
+            0%   { box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+            40%  { box-shadow: 0 15px 45px var(--pulse-glow, rgba(92,133,179,0.55)); }
+            100% { box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        }
+        .card-pulse { animation: cardPulse 0.45s ease-out; }
+
+        /* Cor do custo no card com base no valor */
+        .cost-ok   { color: #2ecc71 !important; }
+        .cost-mid  { color: #f1c40f !important; }
+        .cost-high { color: #e67e22 !important; }
+        .cost-max  { color: #ff6b6b !important; }
+
+        /* Linha de mod ativa */
+        .mod-row.active {
+            background: rgba(92,133,179,0.10);
+            border-radius: 5px;
+            padding-left: 6px;
+            padding-right: 6px;
+            margin-left: -6px;
+            margin-right: -6px;
+            transition: background 0.2s;
+        }
+        .mod-row.active-minus {
+            background: rgba(255,107,107,0.09);
+            border-radius: 5px;
+            padding-left: 6px;
+            padding-right: 6px;
+            margin-left: -6px;
+            margin-right: -6px;
+
+        }
+
+        /* Badge de contagem nas abas */
+        .mod-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 10px;
+            padding: 1px 7px;
+            margin-left: 8px;
+            font-weight: 700;
+            vertical-align: middle;
+            opacity: 0;
+            transform: scale(0.7);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+        }
+        .mod-badge.visible { opacity: 1; transform: scale(1); }
+        details:has(.mod-badge.visible) > summary { border-left: 3px solid var(--primary); padding-left: 9px; }
+
+        /* Animação de abertura das abas */
+        details[open] > .details-content {
+            animation: slideDown 0.18s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>

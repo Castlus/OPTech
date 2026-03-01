@@ -291,6 +291,45 @@ function calculateOPRules() {
             elColaterais.style.color = '';
         }
     }
+
+    // === VISUAIS DINÂMICOS ===
+
+    // 1. Pulso no card
+    const card = document.getElementById('cardToExport');
+    if (card) {
+        card.classList.remove('card-pulse');
+        void card.offsetWidth;
+        card.classList.add('card-pulse');
+    }
+
+    // 2. Cor do custo conforme o valor
+    const custoEl = document.getElementById('outCusto');
+    if (custoEl) {
+        const pp = parseInt(custoEl.innerText) || 0;
+        custoEl.className = 'val ' + (pp <= 5 ? 'cost-ok' : pp <= 10 ? 'cost-mid' : pp <= 16 ? 'cost-high' : 'cost-max');
+    }
+
+    // 3. Destacar linhas de mod ativas
+    document.querySelectorAll('.mod-row').forEach(row => {
+        const isReduction = !!row.closest('details')?.querySelector('summary[style*="ff6b6b"]');
+        const chk = row.querySelector('input[type="checkbox"]');
+        const num = row.querySelector('input[type="number"]');
+        const isActive = (chk && chk.checked) || (num && parseInt(num.value) > 0);
+        row.classList.toggle('active', isActive && !isReduction);
+        row.classList.toggle('active-minus', isActive && isReduction);
+    });
+
+    // 4. Badges de contagem nas abas
+    document.querySelectorAll('details').forEach(det => {
+        const sumEl = det.querySelector('summary');
+        let badge = sumEl.querySelector('.mod-badge');
+        if (!badge) { badge = document.createElement('span'); badge.className = 'mod-badge'; sumEl.appendChild(badge); }
+        let count = 0;
+        det.querySelectorAll('input[type="checkbox"]:checked').forEach(() => count++);
+        det.querySelectorAll('input[type="number"]').forEach(inp => { if (parseInt(inp.value) > 0) count++; });
+        badge.textContent = count;
+        badge.classList.toggle('visible', count > 0);
+    });
 }
 
 // SISTEMA DE GRAVAÇÃO (LOCALSTORAGE)
