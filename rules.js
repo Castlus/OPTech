@@ -404,15 +404,14 @@ function calculateOPRules() {
         statusBox.innerHTML = `✅ Técnica Válida! Custo Base (${rawCost}) - Reduções (${reducoes}) = <b>${custoFinal} PP Final</b>.`;
     }
 
-    // UX: Opacidade do box ofensivo se for Auxiliar
-    document.getElementById('boxOfensivo').style.opacity = isAuxiliar ? "0.4" : "1";
-    document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
-
     // --- UX: Bloqueios Inteligentes de Regras ---
-    const isLinha    = formatoArea === 'Linha';
-    const isAtaque   = tipoDano === 'Unico';
-    const isCuraAtiva = document.getElementById('chkCura')?.checked || false;
-    const isDanoAtivo = document.getElementById('chkDano')?.checked || false;
+    const isLinha       = formatoArea === 'Linha';
+    const isAtaque      = tipoDano === 'Unico';
+    const isCombate     = !isAuxiliar;
+    const isCuraAtiva   = document.getElementById('chkCura')?.checked || false;
+    const isDanoAtivo   = document.getElementById('chkDano')?.checked || false;
+    const testeResistenciaAtivo = document.getElementById('resistencia')?.value !== 'Nenhum';
+    const temSalvaUX    = tipoDano.includes('Salva') || document.getElementById('chkCondArea')?.checked || testeResistenciaAtivo;
 
     function toggleUX(id, condicaoValida, tooltipMsg) {
         const el = document.getElementById(id);
@@ -428,29 +427,41 @@ function calculateOPRules() {
             row.style.opacity = condicaoValida ? '1' : '0.35';
             row.style.pointerEvents = condicaoValida ? 'auto' : 'none';
             row.title = condicaoValida ? '' : tooltipMsg;
+            const stepper = row.querySelector('.stepper');
+            if (stepper) stepper.querySelectorAll('button').forEach(btn => btn.disabled = !condicaoValida);
         }
     }
 
-    // 1. Exclusivos de Linha
-    toggleUX('aumentarAlcance',  isLinha,  'Aplicável apenas ao formato de Linha');
-    toggleUX('modLarguraLinha',  isLinha,  'Aplicável apenas ao formato de Linha');
-
-    // 2. Exclusivos de Área (não Linha)
+    // 1. Formato da Área (Linha vs Cone/Esfera)
+    toggleUX('reduzirArea',      !isLinha, 'Reduzir Área não se aplica a Linha (apenas Cone/Esfera/Cilindro)');
+    toggleUX('aumentarAlcance',   isLinha, 'Aplicável apenas ao formato de Linha');
+    toggleUX('modLarguraLinha',   isLinha, 'Aplicável apenas ao formato de Linha');
     toggleUX('modAumentarArea',  !isLinha, 'Use "Aumentar Alcance" para o formato Linha');
-    toggleUX('reduzirArea',      !isLinha, 'Não aplicável ao formato Linha (regra do sistema)');
+
+    // 2. Exclusivos de Técnicas de Combate
+    toggleUX('chkDano',       isCombate, 'Técnicas Auxiliares não causam dano diretamente');
+    toggleUX('chkAcertoAuto', isCombate, 'Técnicas Auxiliares não fazem jogadas de ataque');
+    toggleUX('chkCerco',      isCombate, 'Técnicas Auxiliares não causam dano a estruturas');
+    toggleUX('chkMultiplos',  isCombate, 'Técnicas Auxiliares não realizam ataques múltiplos');
+    toggleUX('tipoDanoPago',  isCombate, 'Técnicas Auxiliares não causam dano');
+    toggleUX('modDanoFixo',   isCombate, 'Técnicas Auxiliares não possuem Dano Fixo');
 
     // 3. Exigem Jogada de Ataque
-    toggleUX('chkAcertoAuto', isAtaque, 'Exige que a técnica faça uma Jogada de Ataque');
-    toggleUX('modAcerto',     isAtaque, 'Exige que a técnica faça uma Jogada de Ataque');
-    toggleUX('selCrit',       isAtaque, 'Exige que a técnica faça uma Jogada de Ataque');
+    toggleUX('modAcerto', isAtaque && isCombate, 'Exige que a técnica faça uma Jogada de Ataque');
+    toggleUX('selCrit',   isAtaque && isCombate, 'Exige que a técnica faça uma Jogada de Ataque');
 
-    // 4. Dependentes do Efeito Base
-    toggleUX('chkCuraProlongada', isCuraAtiva, 'Exige que o Efeito Base de Cura esteja ativo');
-    toggleUX('chkDanoContinuo',   isDanoAtivo, 'Exige que o Efeito Base de Dano esteja ativo');
-    toggleUX('chkDanoInsistente', isDanoAtivo, 'Exige que o Efeito Base de Dano esteja ativo');
+    // 4. Dependentes do Efeito Base (Cura / Dano)
+    toggleUX('chkCuraProlongada', isCuraAtiva, 'Exige que o Efeito Base "Restaurar PV (Cura)" esteja ativo');
+    toggleUX('chkDanoContinuo',   isDanoAtivo, 'Exige que o Efeito Base "Causar Dano" esteja ativo');
+    toggleUX('chkDanoInsistente', isDanoAtivo, 'Exige que o Efeito Base "Causar Dano" esteja ativo');
 
-    // 5. Técnica Rápida: apenas para Combate
-    toggleUX('chkRapida', !isAuxiliar, 'Técnicas Auxiliares já são conjuradas como Ação Bônus/Reação');
+    // 5. Exigem Teste de Resistência / Salvaguarda
+    toggleUX('chkCirurgico',  temSalvaUX, 'Controle Cirúrgico exige que a técnica imponha uma Salvaguarda');
+    toggleUX('modAumentarCD', temSalvaUX, 'Aumentar CD exige que a técnica imponha uma Salvaguarda');
+
+    // 6. Miscelânea
+    toggleUX('chkRapida',   isCombate,  'Técnicas Auxiliares já são usadas como Ação Bônus/Reação');
+    toggleUX('chkDominada', ppTotal > 0, 'Técnica Dominada exige investimento de PP em algum Efeito Base');
 
     // 5. EFEITOS COLATERAIS no Card
     const colateraisArr = [];
