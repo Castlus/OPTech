@@ -549,17 +549,46 @@ function atualizarDropdownTecnicas() {
     const datalist = document.getElementById('listaTecnicasSalvas');
     select.innerHTML = '<option value="">-- Carregar Técnica Guardada --</option>';
     if (datalist) datalist.innerHTML = '';
-    let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
-    
+
+    const tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+
+    // Separar técnicas base e formas alternativas (filhas)
+    const baseTechs = [];
+    const altTechs  = {}; // { nomePai: [nomeFilha, ...] }
+
     Object.keys(tecnicas).forEach(nome => {
-        let opt = document.createElement('option');
-        opt.value = nome;
-        opt.innerText = nome;
-        select.appendChild(opt);
+        const dados = tecnicas[nome];
+
+        // Datalist recebe todas as técnicas (para pesquisa livre)
         if (datalist) {
-            let dOpt = document.createElement('option');
+            const dOpt = document.createElement('option');
             dOpt.value = nome;
             datalist.appendChild(dOpt);
+        }
+
+        // Se for Aperfeiçoada/Adaptada E a original existir no grimório → é filha
+        if (dados.chkAperfeicoada && dados.nomeTecnicaOriginal && tecnicas[dados.nomeTecnicaOriginal]) {
+            if (!altTechs[dados.nomeTecnicaOriginal]) altTechs[dados.nomeTecnicaOriginal] = [];
+            altTechs[dados.nomeTecnicaOriginal].push(nome);
+        } else {
+            baseTechs.push(nome);
+        }
+    });
+
+    // Montar o select agrupado: base → suas filhas logo abaixo
+    baseTechs.sort().forEach(baseName => {
+        const opt = document.createElement('option');
+        opt.value = baseName;
+        opt.innerText = baseName;
+        select.appendChild(opt);
+
+        if (altTechs[baseName]) {
+            altTechs[baseName].sort().forEach(altName => {
+                const optAlt = document.createElement('option');
+                optAlt.value = altName;
+                optAlt.innerText = `   ↳ ${altName}`;
+                select.appendChild(optAlt);
+            });
         }
     });
 }
