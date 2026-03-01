@@ -354,22 +354,25 @@
 
         /* ── EXPORT BTN ── */
         .btn-export {
-            background: linear-gradient(135deg, var(--primary), #7b6cf6);
             color: white;
             border: none;
-            padding: 13px;
+            padding: 9px 6px;
             border-radius: 8px;
             cursor: pointer;
-            font-family: 'Cinzel', serif;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 0.03em;
+            font-size: 12px;
+            letter-spacing: 0.02em;
             width: 100%;
-            transition: filter 0.2s, transform 0.1s;
-            box-shadow: 0 4px 15px rgba(92,133,179,0.3);
+            transition: filter 0.18s, transform 0.1s, box-shadow 0.18s;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
         }
-        .btn-export:hover { filter: brightness(1.12); transform: translateY(-1px); }
-        .btn-export:active { transform: translateY(0); }
+        .btn-export:hover { filter: brightness(1.15); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+        .btn-export:active { transform: translateY(0); filter: brightness(0.95); }
+        .btn-png   { background: linear-gradient(135deg, #1e3a5f, #2e6da4); box-shadow: 0 3px 10px rgba(46,109,164,0.35); }
+        .btn-claro { background: linear-gradient(135deg, #4a4a4a, #717171); box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+        .btn-txt   { background: linear-gradient(135deg, #1a6b3a, #27ae60); box-shadow: 0 3px 10px rgba(39,174,96,0.35); }
+        .btn-copy  { background: linear-gradient(135deg, #8a5a00, #e67e22); box-shadow: 0 3px 10px rgba(230,126,34,0.35); }
 
         /* ── VISUAIS DINÂMICOS ── */
         @keyframes cardPulse {
@@ -799,11 +802,11 @@
             <div class="pp-bar-wrap"><div id="ppBarFill" class="pp-bar-fill"></div></div>
             <span id="ppBarLabel" style="white-space:nowrap; min-width:32px; text-align:right;">0/0</span>
         </div>
-        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-            <button class="btn-export" style="flex:1; width:auto;" onclick="exportImage()">📷 PNG</button>
-            <button class="btn-export" style="flex:1; width:auto;" onclick="exportImageClaro()">🖨️ Claro</button>
-            <button class="btn-export" style="flex:1; width:auto;" onclick="exportarTXT()">📄 TXT</button>
-            <button class="btn-export" id="btnCopiar" style="flex:1; width:auto;" onclick="copiarParaClipboard()">📋 Copiar</button>
+        <div style="display:flex; gap:7px; margin-top:8px; flex-wrap:wrap;">
+            <button class="btn-export btn-png" style="flex:1; width:auto;" onclick="exportImage()">📷 PNG</button>
+            <button class="btn-export btn-claro" style="flex:1; width:auto;" onclick="exportImageClaro()">🖨️ Claro</button>
+            <button class="btn-export btn-txt" style="flex:1; width:auto;" onclick="exportarTXT()">📄 TXT</button>
+            <button class="btn-export btn-copy" id="btnCopiar" style="flex:1; width:auto;" onclick="copiarParaClipboard()">📋 Copiar</button>
         </div>
     </div>
 

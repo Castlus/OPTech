@@ -798,6 +798,6 @@ function copiarParaClipboard() {
         const orig = btn.innerText;
         btn.innerText = '✓ Copiado!';
         btn.style.background = '#27ae60';
-        setTimeout(() => { btn.innerText = orig; btn.style.background = ''; }, 2200);
+        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2200);
     }).catch(() => alert('Erro ao copiar. Use PNG ou TXT.'));
 }
