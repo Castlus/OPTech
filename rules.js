@@ -104,15 +104,26 @@ function calculateOPRules() {
     if (document.getElementById('chkCondArea') && document.getElementById('chkCondArea').checked) {
         let grauCondicao = grau;
 
-        // Verifica se a área foi modificada
-        const inputsArea = document.querySelectorAll('#modAumentarArea, #reduzirArea');
-        const areaModificada = Array.from(inputsArea).some(inp => parseInt(inp.value) > 0);
+        // Verifica se a área ou alcance foi modificado
+        const areaModificada = (parseInt(document.getElementById('modAumentarArea')?.value) || 0) > 0 || 
+                               (parseInt(document.getElementById('reduzirArea')?.value) || 0) > 0 ||
+                               (parseInt(document.getElementById('aumentarAlcance')?.value) || 0) > 0;
 
         if (isAuxiliar || areaModificada) {
             const alcanceReferencia = stats[formatoArea.toLowerCase()] || 0;
-            const bonusArea  = (parseInt(document.getElementById('modAumentarArea')?.value) || 0) * (formatoArea === 'Cone' ? 3 : 1.5);
-            const reducaoArea = (parseInt(document.getElementById('reduzirArea')?.value)    || 0) * (formatoArea === 'Cone' ? 9 : 6);
-            const alcanceFinal = alcanceReferencia + bonusArea - reducaoArea;
+            let alcanceFinal = alcanceReferencia;
+            
+            if (formatoArea === 'Linha') {
+                alcanceFinal += (parseInt(document.getElementById('aumentarAlcance')?.value) || 0) * 6;
+                // A regra não prevê Reduzir Área para Linha
+            } else if (formatoArea === 'Cone') {
+                alcanceFinal += (parseInt(document.getElementById('modAumentarArea')?.value) || 0) * 3;
+                alcanceFinal -= (parseInt(document.getElementById('reduzirArea')?.value) || 0) * 9;
+            } else { // Esfera / Cilindro
+                alcanceFinal += (parseInt(document.getElementById('modAumentarArea')?.value) || 0) * 3;
+                alcanceFinal -= (parseInt(document.getElementById('reduzirArea')?.value) || 0) * 6;
+            }
+            if (alcanceFinal < 0) alcanceFinal = 0;
 
             let grauMaisProximo = 1;
             let menorDiferenca = Infinity;
@@ -126,7 +137,6 @@ function calculateOPRules() {
             grauCondicao = grauMaisProximo;
         }
 
-        // 0 PP para 1º Grau; metade arredondada para cima nos restantes
         if (grauCondicao > 1) {
             rawCost += Math.ceil(grauCondicao / 2);
         }
@@ -270,8 +280,7 @@ function calculateOPRules() {
     let textoAlcance = '';
 
     if (formatoArea === 'Linha') {
-        alcanceFinalVisual += (inputAumentarAlcance * 6) - (inputReduzirArea * 6);
-        if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
+        alcanceFinalVisual += (inputAumentarAlcance * 6); // Regra não permite redução de comprimento na Linha
         const largura = 1.5 + (inputLarguraLinha * 1.5);
         textoAlcance = alcanceFinalVisual === 0 ? 'Toque' : `${alcanceFinalVisual}m de comp.`;
         if (inputLarguraLinha > 0 && alcanceFinalVisual > 0) textoAlcance += ` x ${largura}m larg.`;
@@ -280,8 +289,8 @@ function calculateOPRules() {
         alcanceFinalVisual += (inputAumentarArea * 3) - (inputReduzirArea * 9);
         if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
         textoAlcance = `${alcanceFinalVisual}m (Cone)`;
-    } else {
-        alcanceFinalVisual += (inputAumentarArea * 1.5) - (inputReduzirArea * 1.5);
+    } else { // Esfera ou Cilindro
+        alcanceFinalVisual += (inputAumentarArea * 3) - (inputReduzirArea * 6);
         if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
         textoAlcance = `${alcanceFinalVisual}m de raio (${formatoArea})`;
     }
