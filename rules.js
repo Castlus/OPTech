@@ -274,7 +274,7 @@ function calculateOPRules() {
 
     if(nivelExaustao > 0) colateraisList.push(`+${nivelExaustao} Nível de Exaustão`);
     if(minDebilitante > 0) colateraisList.push(`${minDebilitante} Min. sem PP`);
-    if(efeito_colateral_fixo > 0) colateraisList.push(`Efeito Fixo (${efeito_colateral_fixo})`);
+    if(efeito_colateral_fixo > 0) colateraisList.push(`${efeito_colateral_fixo * 5} de Dano Colateral`);
     if(document.getElementById('chkDependente')?.checked) colateraisList.push('Dependente');
     if(document.getElementById('chkIndomavel')?.checked) colateraisList.push('Indomável');
     if(document.getElementById('chkDevoradora')?.checked) colateraisList.push('Devoradora');
