@@ -41,6 +41,20 @@ function calculateOPRules() {
     let stats = !isAuxiliar ? opDatabase.Combate[grau] : (grau >= 6 ? opDatabase.Auxiliar.Desperta : opDatabase.Auxiliar.Normal);
     let maxPPPermitido = stats.maxPP;
 
+    // --- REGRA: LIMITES DE ADIÇÃO POR GRAU ---
+    // O máximo de vezes que uma adição pode ser comprada é igual ao Grau da Técnica
+    // (ou o limite fixo do livro, se for menor).
+    document.querySelectorAll('.mod-mult[data-type="plus"]').forEach(inp => {
+        let limiteOriginal = inp.getAttribute('data-hard-max');
+        if (!limiteOriginal) {
+            limiteOriginal = inp.getAttribute('max') || '99';
+            inp.setAttribute('data-hard-max', limiteOriginal);
+        }
+        const limiteFinal = Math.min(grau, parseInt(limiteOriginal));
+        inp.max = limiteFinal;
+        if (parseInt(inp.value) > limiteFinal) inp.value = limiteFinal;
+    });
+
     // 3. CÁLCULO DE CUSTOS (PP)
     let rawCost = ppTotal;
     const fonteTecnica = document.getElementById('fonteTecnica').value;
