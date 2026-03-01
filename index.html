@@ -560,7 +560,18 @@
         <div class="form-row">
             <div class="form-group"><label>Pré-requisitos</label><input type="text" id="prereq" value="Nenhum"></div>
             <div class="form-group"><label>Origem / Estilo</label><input type="text" id="origem" value="Geral"></div>
-            <div class="form-group"><label>Teste de Resistência</label><input type="text" id="resistencia" value="Nenhum"></div>
+            <div class="form-group">
+                <label>Teste de Resistência</label>
+                <select id="resistencia" onchange="calculateOPRules()">
+                    <option value="Nenhum">Nenhum (Sem TR)</option>
+                    <option value="Força">Força</option>
+                    <option value="Destreza">Destreza</option>
+                    <option value="Constituição">Constituição</option>
+                    <option value="Vontade">Vontade</option>
+                    <option value="Presença">Presença</option>
+                    <option value="Sabedoria">Sabedoria</option>
+                </select>
+            </div>
         </div>
         <div class="form-row">
             <div class="form-group"><label>Mod. de Atributo (Ex: +3)</label><input type="number" id="modAtributo" value="3"></div>
