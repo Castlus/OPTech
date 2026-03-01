@@ -366,6 +366,13 @@ function calculateOPRules() {
     document.querySelector('.tech-stats').style.borderLeftColor = corTema;
     document.querySelectorAll('.stat-item span:first-child').forEach(el => el.style.color = corTema);
 
+    // Fonte e Fundo personalizados do Card
+    const cardFonte = document.getElementById('cardFonte')?.value || 'Cinzel';
+    const cardBgColor = document.getElementById('cardBgColor')?.value || '#1a1d28';
+    document.getElementById('outNome').style.fontFamily = `'${cardFonte}', serif`;
+    document.getElementById('outGrau').style.fontFamily = `'${cardFonte}', serif`;
+    document.getElementById('cardToExport').style.background = cardBgColor;
+
     // Validador Final de Custo
     const statusBox = document.getElementById('statusBox');
     if (custoFinal > maxPPPermitido) {
@@ -569,6 +576,8 @@ function novaTecnica() {
     document.getElementById('nomeTecnicaOriginal').value = '';
     toggleOriginalTech();
     document.getElementById('corTema').value = '#d93838';
+    document.getElementById('cardBgColor').value = '#1a1d28';
+    document.getElementById('cardFonte').value = 'Cinzel';
     document.getElementById('prereq').value = 'Nenhum';
     document.getElementById('origem').value = 'Geral';
     
@@ -685,4 +694,55 @@ function importarEstatisticasDaBase(nomeBase) {
         syncEfeitosBase();
         calculateOPRules();
     }
+}
+
+// --- EXPORTAÇÕES ADICIONAIS ---
+function _buildCardText() {
+    const sep = '══════════════════════════════════';
+    const nome = document.getElementById('outNome').innerText;
+    const sub  = document.getElementById('outSub').innerText;
+    const orig = document.getElementById('outOriginal').innerText;
+    const grau = document.getElementById('outGrau').innerText;
+    const stats = [
+        ['Custo',          document.getElementById('outCusto').innerText],
+        [document.getElementById('lblDano').innerText, document.getElementById('outDano').innerText],
+        ['Requisito',      document.getElementById('outAcao').innerText],
+        ['Alcance',        document.getElementById('outAlcance').innerText],
+        ['Origem',         document.getElementById('outOrigem').innerText],
+        ['Pré-requisito',  document.getElementById('outPrereq').innerText],
+        ['Crítico',        document.getElementById('outCrit').innerText],
+        ['Atq. Combinado', document.getElementById('outCombinado').innerText],
+        ['Resistência',    document.getElementById('outResistencia').innerText],
+        ['Dif. CD',        document.getElementById('outCD').innerText],
+        ['Condições',      document.getElementById('outCondicoes').innerText],
+        ['Colaterais',     document.getElementById('outColaterais').innerText],
+    ].filter(([,v]) => v && v !== '-').map(([l, v]) => `  ${(l + ':').padEnd(16)} ${v}`);
+    const desc = document.getElementById('outDesc').innerText;
+    return [
+        sep, `  ${nome}  ·  ${grau}`, `  ${sub}`,
+        orig ? `  ${orig}` : null,
+        sep, ...stats, sep, '', 'DESCRIÇÃO:', desc, '',
+        sep, '[Gerado por Forja de Técnicas · OP RPG 1.5.7]'
+    ].filter(l => l !== null).join('\n');
+}
+
+function exportarTXT() {
+    const texto = _buildCardText();
+    const blob = new Blob([texto], {type: 'text/plain;charset=utf-8'});
+    const link = document.createElement('a');
+    const nomeArq = (document.getElementById('nome').value || 'tecnica').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.href = URL.createObjectURL(blob);
+    link.download = `${nomeArq}_oprpg.txt`;
+    link.click();
+}
+
+function copiarParaClipboard() {
+    const texto = _buildCardText();
+    navigator.clipboard.writeText(texto).then(() => {
+        const btn = document.getElementById('btnCopiar');
+        const orig = btn.innerText;
+        btn.innerText = '✓ Copiado!';
+        btn.style.background = '#27ae60';
+        setTimeout(() => { btn.innerText = orig; btn.style.background = ''; }, 2200);
+    }).catch(() => alert('Erro ao copiar. Use PNG ou TXT.'));
 }
