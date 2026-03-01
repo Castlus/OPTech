@@ -262,6 +262,32 @@ function calculateOPRules() {
     // UX: Opacidade do box ofensivo se for Auxiliar
     document.getElementById('boxOfensivo').style.opacity = isAuxiliar ? "0.4" : "1";
     document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
+
+    // 5. EFEITOS COLATERAIS no Card
+    const elColaterais = document.getElementById('outColaterais');
+    const colateraisList = [];
+
+    // Ler inputs de efeitos negativos
+    const nivelExaustao = parseInt(document.querySelectorAll('.mod-mult[data-type="minus"][data-cost="4"]')[0]?.value) || 0;
+    const minDebilitante = parseInt(document.querySelectorAll('.mod-mult[data-type="minus"][data-cost="3"]')[0]?.value) || 0;
+    const efeito_colateral_fixo = parseInt(document.querySelectorAll('.mod-mult[data-type="minus"][data-cost="1"]')[0]?.value) || 0;
+
+    if(nivelExaustao > 0) colateraisList.push(`+${nivelExaustao} Nível de Exaustão`);
+    if(minDebilitante > 0) colateraisList.push(`${minDebilitante} Min. sem PP`);
+    if(efeito_colateral_fixo > 0) colateraisList.push(`Efeito Fixo (${efeito_colateral_fixo})`);
+    if(document.getElementById('chkDependente')?.checked) colateraisList.push('Dependente');
+    if(document.getElementById('chkIndomavel')?.checked) colateraisList.push('Indomável');
+    if(document.getElementById('chkDevoradora')?.checked) colateraisList.push('Devoradora');
+    if(document.getElementById('chkConcentracao')?.checked) colateraisList.push('Conc. Crucial');
+    if(document.getElementById('chkDemorada')?.checked) colateraisList.push('Demorada');
+
+    if(colateraisList.length > 0) {
+        elColaterais.innerText = colateraisList.join(' | ');
+        elColaterais.style.color = '#ff6b6b';
+    } else {
+        elColaterais.innerText = 'Nenhum';
+        elColaterais.style.color = '';
+    }
 }
 
 // SISTEMA DE GRAVAÇÃO (LOCALSTORAGE)
