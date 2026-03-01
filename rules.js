@@ -221,48 +221,68 @@ function calculateOPRules() {
     }
     document.getElementById('outAcao').innerText = acaoReq;
 
-    // Cálculo de Alcance
-    let alcanceCalculado = stats ? (stats[formatoArea.toLowerCase()] || 0) : 0;
-    alcanceCalculado += (parseInt(document.getElementById('aumentarAlcance').value) || 0) * 6;
-    
-    // Reduzir Área aplica no alcance para Linha e Cone
-    const reduzirAreaVal = parseInt(document.getElementById('reduzirArea')?.value) || 0;
-    if (formatoArea === 'Linha') alcanceCalculado -= reduzirAreaVal * 6;
-    if (formatoArea === 'Cone') alcanceCalculado -= reduzirAreaVal * 9;
-    if (alcanceCalculado < 0) alcanceCalculado = 0;
-    
-    let textoAlcance = alcanceCalculado === 0 && formatoArea === 'Linha' ? 'Toque' : `${alcanceCalculado}m (${formatoArea})`;
-    
-    // Extras de geometria
-    const modEmpurrao = parseInt(document.getElementById('modEmpurrao')?.value) || 0;
-    const modLargura = parseInt(document.getElementById('modLarguraLinha')?.value) || 0;
-    const modArea = parseInt(document.getElementById('modAumentarArea')?.value) || 0;
+    // --- Cálculo Visual de Alcance e Área ---
+    const inputAumentarAlcance = parseInt(document.getElementById('aumentarAlcance')?.value) || 0;
+    const inputAumentarArea   = parseInt(document.getElementById('modAumentarArea')?.value) || 0;
+    const inputReduzirArea    = parseInt(document.getElementById('reduzirArea')?.value) || 0;
+    const inputLarguraLinha   = parseInt(document.getElementById('modLarguraLinha')?.value) || 0;
+    const baseAlcance = stats ? (stats[formatoArea.toLowerCase()] || 0) : 0;
+
+    let alcanceFinalVisual = baseAlcance;
+    let textoAlcance = '';
+
+    if (formatoArea === 'Linha') {
+        alcanceFinalVisual += (inputAumentarAlcance * 6) - (inputReduzirArea * 6);
+        if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
+        const largura = 1.5 + (inputLarguraLinha * 1.5);
+        textoAlcance = alcanceFinalVisual === 0 ? 'Toque' : `${alcanceFinalVisual}m de comp.`;
+        if (inputLarguraLinha > 0 && alcanceFinalVisual > 0) textoAlcance += ` x ${largura}m larg.`;
+        textoAlcance += ' (Linha)';
+    } else if (formatoArea === 'Cone') {
+        alcanceFinalVisual += (inputAumentarArea * 3) - (inputReduzirArea * 9);
+        if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
+        textoAlcance = `${alcanceFinalVisual}m (Cone)`;
+    } else {
+        alcanceFinalVisual += (inputAumentarArea * 1.5) - (inputReduzirArea * 1.5);
+        if (alcanceFinalVisual < 0) alcanceFinalVisual = 0;
+        textoAlcance = `${alcanceFinalVisual}m de raio (${formatoArea})`;
+    }
+
+    // Extras de mobilidade/suporte na linha de alcance
+    const modEmpurrao  = parseInt(document.getElementById('modEmpurrao')?.value) || 0;
     const modMovimento = parseInt(document.getElementById('modMovimento')?.value) || 0;
-    const modVooExtra = parseInt(document.getElementById('modVooExtra')?.value) || 0;
+    const modVooExtra  = parseInt(document.getElementById('modVooExtra')?.value) || 0;
     const modContencao = parseInt(document.getElementById('modContencao')?.value) || 0;
-    const modAcerto = parseInt(document.getElementById('modAcerto')?.value) || 0;
-    const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
-    const modCD = parseInt(document.getElementById('modCD')?.value) || 0;
+    const modAcerto    = parseInt(document.getElementById('modAcerto')?.value) || 0;
+    const modDanoFixo  = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
 
     let extras = [];
-    if(modEmpurrao > 0) extras.push(`Empurrão ${modEmpurrao * 1.5}m`);
-    if(modLargura > 0) extras.push(`Largura +${modLargura * 1.5}m`);
-    // Área: Cone +3m/ponto, Esfera/Cilindro +1,5m/ponto
-    if(modArea > 0) {
-        const areaGanho = formatoArea === 'Cone' ? modArea * 3 : modArea * 1.5;
-        extras.push(`Área +${areaGanho}m`);
-    }
-    if(modMovimento > 0) extras.push(`Mov. +${modMovimento * 3}m`);
-    if(document.getElementById('chkVooBase')?.checked) extras.push('Voo Base');
-    if(modVooExtra > 0) extras.push(`Voo +${modVooExtra * 3}m`);
-    if(modContencao > 0) extras.push(`Contenção ${modContencao * 2}d8`);
-    if(modAcerto > 0) extras.push(`Acerto +${modAcerto}`);
-    if(modDanoFixo > 0) extras.push(`Dano Fixo +${modDanoFixo}`);
-    if(modCD > 0) extras.push(`CD +${modCD}`);
+    if (modEmpurrao  > 0) extras.push(`Empurrão ${modEmpurrao * 1.5}m`);
+    if (modMovimento > 0) extras.push(`Mov. +${modMovimento * 3}m`);
+    if (document.getElementById('chkVooBase')?.checked) extras.push('Voo Base');
+    if (modVooExtra  > 0) extras.push(`Voo +${modVooExtra * 3}m`);
+    if (modContencao > 0) extras.push(`Contenção ${modContencao * 2}d8`);
+    if (modAcerto    > 0) extras.push(`Acerto +${modAcerto}`);
+    if (modDanoFixo  > 0) extras.push(`Dano Fixo +${modDanoFixo}`);
+    if (extras.length > 0) textoAlcance += ' / ' + extras.join(' / ');
 
-    if(extras.length > 0) textoAlcance += ' / ' + extras.join(' / ');
-    
     document.getElementById('outAlcance').innerText = textoAlcance;
+
+    // --- Cálculo Oficial da CD (pág. 236) ---
+    const spanCD = document.getElementById('outCD');
+    const testeResistencia = document.getElementById('resistencia')?.value || 'Nenhum';
+    const temSalva = tipoDano.includes('Salva') || (document.getElementById('chkCondArea')?.checked) || testeResistencia !== 'Nenhum';
+    if (spanCD) {
+        if (temSalva) {
+            const modAtributo = parseInt(document.getElementById('modAtributo')?.value) || 0;
+            const proficiencia = parseInt(document.getElementById('proficiencia')?.value) || 0;
+            const modCDExtra  = parseInt(document.getElementById('modAumentarCD')?.value) || 0;
+            const cdFinal = 8 + modAtributo + proficiencia + modCDExtra;
+            spanCD.innerText = testeResistencia !== 'Nenhum' ? `${cdFinal} (${testeResistencia})` : `${cdFinal}`;
+        } else {
+            spanCD.innerText = '-';
+        }
+    }
 
     // Validador Rigoroso de Ataque Combinado
     // Atualizar card de Condições
