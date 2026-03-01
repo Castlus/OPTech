@@ -101,8 +101,8 @@ function calculateOPRules() {
     if(document.getElementById('chkDanoContinuo').checked) rawCost += Math.ceil(grau / 2);
     if(document.getElementById('chkDanoInsistente').checked) rawCost += Math.ceil(grau / 2);
     // --- Cálculo Rigoroso de Condição em Área ---
+    let grauCondicao = grau; // pode ser sobrescrito abaixo
     if (document.getElementById('chkCondArea') && document.getElementById('chkCondArea').checked) {
-        let grauCondicao = grau;
 
         // Verifica se a área ou alcance foi modificado
         const areaModificada = (parseInt(document.getElementById('modAumentarArea')?.value) || 0) > 0 || 
@@ -407,16 +407,73 @@ function calculateOPRules() {
     document.getElementById('outGrau').style.fontFamily = `'${cardFonte}', serif`;
     document.getElementById('cardToExport').style.background = cardBgColor;
 
+    // --- Extrato Detalhado do Custo ---
+    const _eb = [], _em = [], _er = []; // base, modificadores, reduções
+
+    if (ppDano     > 0) _eb.push(`+${ppDano} PP \u2014 Causar Dano`);
+    if (ppCura     > 0) _eb.push(`+${ppCura} PP \u2014 Restaurar PV (Cura)`);
+    if (ppPVTemp   > 0) _eb.push(`+${ppPVTemp} PP \u2014 PV Tempor\u00e1rios`);
+    if (ppBloqueio > 0) _eb.push(`+${ppBloqueio} PP \u2014 Dano Bloqueado`);
+
+    document.querySelectorAll('.mod[data-type="plus"]:checked').forEach(chk => {
+        const txt = chk.closest('.mod-row')?.querySelector('label')?.textContent?.trim() || chk.id;
+        _em.push(`+${chk.value} PP \u2014 ${txt}`);
+    });
+    if (critCost > 0) _em.push(`+${critCost} PP \u2014 Margem de Cr\u00edtico (${crit}-20)`);
+    document.querySelectorAll('.mod-mult[data-type="plus"]').forEach(inp => {
+        const val = parseInt(inp.value) || 0;
+        if (val <= 0) return;
+        const cost = parseInt(inp.getAttribute('data-cost')) || 1;
+        const txt = inp.closest('.mod-row')?.querySelector('label')?.textContent?.trim() || inp.id;
+        _em.push(`+${val * cost} PP \u2014 ${txt}`);
+    });
+    if (ppCond1 > 0) _em.push(`+${ppCond1} PP \u2014 ${sel1.options[sel1.selectedIndex]?.text}`);
+    if (ppCond2 > 0) _em.push(`+${ppCond2} PP \u2014 ${sel2.options[sel2.selectedIndex]?.text}`);
+    if (document.getElementById('chkAperfeicoada')?.checked)                    _em.push(`+${Math.floor(grau/2)} PP \u2014 Forma Aperfei\u00e7oada/Adaptada`);
+    if (document.getElementById('chkRapida')?.checked)                          _em.push(`+${grau} PP \u2014 T\u00e9cnica R\u00e1pida`);
+    if (document.getElementById('chkDanoContinuo')?.checked)                    _em.push(`+${Math.ceil(grau/2)} PP \u2014 Dano Cont\u00ednuo`);
+    if (document.getElementById('chkDanoInsistente')?.checked)                  _em.push(`+${Math.ceil(grau/2)} PP \u2014 Dano Insistente`);
+    if (document.getElementById('chkCuraProlongada')?.checked)                  _em.push(`+${Math.ceil(grau/2)} PP \u2014 Cura Prolongada`);
+    if (document.getElementById('chkCondArea')?.checked && grauCondicao > 1)    _em.push(`+${Math.ceil(grauCondicao/2)} PP \u2014 Condi\u00e7\u00e3o em \u00c1rea`);
+    if (tipoDanoPago === 1) _em.push(`+1 PP \u2014 Tipo de Dano (Elemental)`);
+    if (tipoDanoPago === 2) _em.push(`+${Math.max(1, Math.ceil(grau/2))} PP \u2014 Tipo de Dano (Din\u00e2mico)`);
+    if (tipoDanoPago === 3) _em.push(`+${Math.max(1, grau)} PP \u2014 Tipo de Dano (Verdadeiro)`);
+    if (minProlongados > 0) _em.push(`+${4 + (minProlongados-1)*2} PP \u2014 Dura\u00e7\u00e3o Prolongada (${minProlongados} min)`);
+
+    document.querySelectorAll('.mod[data-type="minus"]:checked').forEach(chk => {
+        const txt = chk.closest('.mod-row')?.querySelector('label')?.textContent?.trim() || chk.id;
+        _er.push(`\u2212${chk.value} PP \u2014 ${txt}`);
+    });
+    document.querySelectorAll('.mod-mult[data-type="minus"]').forEach(inp => {
+        const val = parseInt(inp.value) || 0;
+        if (val <= 0) return;
+        const cost = parseInt(inp.getAttribute('data-cost')) || 1;
+        const txt = inp.closest('.mod-row')?.querySelector('label')?.textContent?.trim() || inp.id;
+        _er.push(`\u2212${val * cost} PP \u2014 ${txt}`);
+    });
+    if (document.getElementById('chkIndomavel')?.checked)   _er.push(`\u2212${grau} PP \u2014 T\u00e9cnica Indom\u00e1vel`);
+    if (document.getElementById('chkDependente')?.checked)  _er.push(`\u2212${Math.max(1,Math.floor(grau/2))} PP \u2014 T\u00e9cnica Dependente`);
+    if (document.getElementById('chkDemorada')?.checked)    _er.push(`\u22123 PP \u2014 T\u00e9cnica Demorada`);
+    if (document.getElementById('chkNaoOfensiva')?.checked) _er.push(`\u2212${isAuxiliar ? 1 : 2} PP \u2014 T\u00e9cnica N\u00e3o Ofensiva`);
+    if (fonteTecnica === 'Estilo') _er.push(`\u2212${isAuxiliar ? 1 : Math.max(1,Math.floor(grau/2))} PP \u2014 Redu\u00e7\u00e3o de Estilo de Combate`);
+
+    const _sec = (title, items, color) => items.length
+        ? `<div style="margin-top:5px"><span style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.5px">${title}</span><br>${items.map(i => `<span style="color:${color}">${i}</span>`).join('<br>')}</div>` : '';
+    const _extratoHTML = _sec('Efeitos Base', _eb, '#7ec8e3')
+        + _sec('Modificadores (+)', _em, '#9be09b')
+        + _sec('Redu\u00e7\u00f5es (\u2212)', _er, '#ff9e9e')
+        + `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2)"><b>Total: ${rawCost} \u2212 ${reducoes} = ${custoFinal} PP</b></div>`;
+
     // Validador Final de Custo
     const statusBox = document.getElementById('statusBox');
+    statusBox.style.display = 'block';
+    const _extratoToggle = `<details style="margin-top:4px;font-weight:normal;cursor:pointer"><summary style="opacity:.7;font-size:11px">\ud83d\udccb Ver extrato de PP</summary>${_extratoHTML}</details>`;
     if (custoFinal > maxPPPermitido) {
-        statusBox.style.display = 'block';
         statusBox.className = 'status-msg msg-error';
-        statusBox.innerText = `⚠️ Custo Excedido! Custo final (${custoFinal} PP) passou do limite do ${grau}º Grau (${maxPPPermitido} PP).`;
+        statusBox.innerHTML = `<div>\u26a0\ufe0f <b>Custo Excedido!</b> ${custoFinal} PP &gt; limite de ${maxPPPermitido} PP (${grau}\u00ba Grau)</div>`+ _extratoToggle;
     } else {
-        statusBox.style.display = 'block';
         statusBox.className = 'status-msg msg-ok';
-        statusBox.innerHTML = `✅ Técnica Válida! Custo Base (${rawCost}) - Reduções (${reducoes}) = <b>${custoFinal} PP Final</b>.`;
+        statusBox.innerHTML = `<div>\u2705 <b>T\u00e9cnica V\u00e1lida!</b> ${custoFinal} PP / ${maxPPPermitido} PP m\u00e1x.</div>` + _extratoToggle;
     }
 
     // --- UX: Bloqueios Inteligentes de Regras ---
