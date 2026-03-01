@@ -365,6 +365,7 @@ function calculateOPRules() {
     document.querySelector('.tech-grau').style.color = corTema;
     document.querySelector('.tech-stats').style.borderLeftColor = corTema;
     document.querySelectorAll('.stat-item span:first-child').forEach(el => el.style.color = corTema);
+    document.getElementById('outSub').style.color = corTema;
 
     // Fonte e Fundo personalizados do Card
     const cardFonte = document.getElementById('cardFonte')?.value || 'Cinzel';
@@ -662,6 +663,31 @@ function importarBackup(event) {
     };
     reader.readAsText(file);
     event.target.value = ''; // Limpar o input de ficheiro
+}
+
+// Importar fonte via URL do Google Fonts
+function importarFonte() {
+    const url = document.getElementById('fontImportUrl').value.trim();
+    if (!url.startsWith('http')) return;
+    let existing = document.getElementById('dynamicFontLink');
+    if (existing) existing.remove();
+    const match = url.match(/family=([^:&]+)/);
+    if (!match) return;
+    const familyName = decodeURIComponent(match[1]).replace(/\+/g, ' ').split(':')[0];
+    let link = document.createElement('link');
+    link.id = 'dynamicFontLink';
+    link.rel = 'stylesheet';
+    link.href = url;
+    document.head.appendChild(link);
+    const select = document.getElementById('cardFonte');
+    if (!Array.from(select.options).some(o => o.value === familyName)) {
+        let opt = document.createElement('option');
+        opt.value = familyName;
+        opt.text = `${familyName} (Importada)`;
+        select.appendChild(opt);
+    }
+    select.value = familyName;
+    calculateOPRules();
 }
 
 // Forma Aperfeiçoada/Adaptada
