@@ -197,6 +197,7 @@
 
         <div class="toolbar">
             <select id="tecnicasSalvas" style="flex: 1;"><option value="">-- Carregar Técnica Guardada --</option></select>
+            <button onclick="salvarTecnica()" style="padding: 5px 10px; cursor: pointer; background-color: #2ecc71; color: white; border: none; border-radius: 4px; font-weight: bold;">💾 Salvar</button>
             <button onclick="carregarTecnica()" style="padding: 5px 10px; cursor: pointer;">Carregar</button>
             <button onclick="apagarTecnica()" style="padding: 5px 10px; cursor: pointer; color: red;">Apagar</button>
         </div>
@@ -388,8 +389,6 @@
         <div class="form-group"><label>Descrição Completa</label><textarea id="desc">Efeito detalhado da técnica...</textarea></div>
 
         <div id="statusBox" class="status-msg"></div>
-
-        <button class="btn-export btn-salvar" onclick="salvarTecnica()">💾 Guardar Técnica no Navegador</button>
     </div>
 
     <div class="preview-container">
