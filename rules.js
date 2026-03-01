@@ -1,0 +1,403 @@
+// Base de dados de Limites do Livro 1.5.7 OP RPG
+const opDatabase = {
+    Combate: {
+        1: { maxPP: 2, linha: 9, cone: 12, esfera: 3 },
+        2: { maxPP: 6, linha: 15, cone: 15, esfera: 4.5 },
+        3: { maxPP: 9, linha: 21, cone: 18, esfera: 6 },
+        4: { maxPP: 12, linha: 27, cone: 21, esfera: 7.5 },
+        5: { maxPP: 15, linha: 33, cone: 24, esfera: 9 },
+        6: { maxPP: 18, linha: 39, cone: 27, esfera: 10.5 },
+        7: { maxPP: 21, linha: 45, cone: 30, esfera: 12 }
+    },
+    Auxiliar: {
+        Normal: { maxPP: 15, linha: 33, cone: 24, esfera: 9 }, // Graus 1 a 5
+        Desperta: { maxPP: 21, linha: 45, cone: 30, esfera: 12 } // Graus 6 e 7
+    }
+};
+
+// Listeners para atualizar automaticamente
+document.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', calculateOPRules);
+    el.addEventListener('change', calculateOPRules);
+});
+
+function calculateOPRules() {
+    // 1. Capturar Dados
+    const nome = document.getElementById('nome').value || 'TÉCNICA SEM NOME';
+    const grau = parseInt(document.getElementById('grau').value);
+    const categoria = document.getElementById('categoria').value;
+    const formatoArea = document.getElementById('formatoArea').value;
+    const tipoDano = document.getElementById('tipoDano').value;
+    const corTema = document.getElementById('corTema').value;
+    const isAuxiliar = (categoria === 'Auxiliar');
+    let ppBase = parseInt(document.getElementById('ppBase').value) || 0;
+    
+    // 2. Limites do Grau
+    let stats = !isAuxiliar ? opDatabase.Combate[grau] : (grau >= 6 ? opDatabase.Auxiliar.Desperta : opDatabase.Auxiliar.Normal);
+    let maxPPPermitido = stats.maxPP;
+
+    if (ppBase > maxPPPermitido) {
+        ppBase = maxPPPermitido;
+        document.getElementById('ppBase').value = ppBase;
+    }
+
+    // 3. CÁLCULO DE CUSTOS (PP)
+    let rawCost = ppBase;
+    const fonteTecnica = document.getElementById('fonteTecnica').value;
+
+    // Modificadores Positivos Simples
+    document.querySelectorAll('.mod[data-type="plus"]:checked').forEach(chk => {
+        // Ignorar os críticos aqui para somar manualmente depois com lógica de exclusão
+        if(chk.id !== 'chkCrit19' && chk.id !== 'chkCrit18') {
+             rawCost += parseInt(chk.value);
+        }
+    });
+
+    // Lógica Específica de Crítico (Mutuamente Exclusiva)
+    const chkCrit19 = document.getElementById('chkCrit19');
+    const chkCrit18 = document.getElementById('chkCrit18');
+    let crit = 20;
+
+    if (chkCrit18 && chkCrit18.checked) {
+        rawCost += 3;
+        crit = 18;
+    } else if (chkCrit19 && chkCrit19.checked) {
+        rawCost += 1;
+        crit = 19;
+    }
+    document.getElementById('outCrit').innerText = `${crit} / x2`;
+
+    document.querySelectorAll('.mod-mult[data-type="plus"]').forEach(inp => {
+        rawCost += (parseInt(inp.value) || 0) * parseInt(inp.getAttribute('data-cost'));
+    });
+    
+    // --- Regras Dinâmicas (Adições) ---
+    // A Forma Aperfeiçoada só cobra o PP extra se a técnica for de Akuma no Mi!
+    if(document.getElementById('chkAperfeicoada').checked && fonteTecnica === 'Akuma') {
+        rawCost += Math.floor(grau / 2);
+    }
+    
+    if(document.getElementById('chkRapida').checked) rawCost += grau;
+    if(document.getElementById('chkDanoContinuo').checked) rawCost += Math.ceil(grau / 2);
+    if(document.getElementById('chkDanoInsistente').checked) rawCost += Math.ceil(grau / 2);
+    if(document.getElementById('chkCondArea').checked) rawCost += Math.ceil(grau / 2);
+    
+    // Correção: Cura Prolongada deve custar metade do grau
+    const elCura = document.getElementById('chkCuraProlongada'); 
+    if(elCura && elCura.checked) {
+         rawCost += Math.ceil(grau / 2);
+    }
+
+    // Regra Opcional: Alterar Tipo de Dano
+    const tipoDanoPagoSelect = document.getElementById('tipoDanoPago');
+    const tipoDanoPago = tipoDanoPagoSelect ? parseInt(tipoDanoPagoSelect.value) : 0;
+    
+    if(tipoDanoPago === 1) rawCost += 1; // Elementais Físicos
+    if(tipoDanoPago === 2) rawCost += Math.max(1, Math.ceil(grau / 2)); // Energia/Psíquico (Min 1)
+    if(tipoDanoPago === 3) rawCost += Math.max(1, grau); // Verdadeiro
+
+    // Duração Prolongada (Não se aplica a cura)
+    const minProlongados = parseInt(document.getElementById('duracaoProlongada').value) || 0;
+    if(minProlongados > 0) rawCost += 4 + ((minProlongados - 1) * 2);
+
+    // --- SOMA NEGATIVA (REDUÇÕES) ---
+    let reducoes = 0;
+    
+    // Modificadores Negativos (Reduções)
+    document.querySelectorAll('.mod[data-type="minus"]:checked').forEach(chk => reducoes += parseInt(chk.value));
+    
+    // IMPORTANTE: Previne que inputs vazios quebrem o cálculo (NaN)
+    document.querySelectorAll('.mod-mult[data-type="minus"]').forEach(inp => {
+        let val = parseInt(inp.value) || 0;
+        let cost = parseInt(inp.getAttribute('data-cost')) || 0;
+        reducoes += val * cost;
+    });
+    
+    if(document.getElementById('chkIndomavel').checked) reducoes += grau;
+    if(document.getElementById('chkDependente').checked) reducoes += Math.max(1, Math.floor(grau / 2));
+    
+    if(document.getElementById('chkNaoOfensiva').checked) {
+        reducoes += isAuxiliar ? 1 : 2;
+    }
+
+    // A GRANDE REGRA: A Redução Base de Categoria SÓ se aplica a Estilos de Combate!
+    if (fonteTecnica === 'Estilo') {
+        reducoes += isAuxiliar ? 1 : Math.max(1, Math.floor(grau / 2));
+    }
+
+    // CUSTO FINAL
+    let custoFinal = rawCost - reducoes;
+    
+    // Regra de Ouro: O custo mínimo é 1 PP, a menos que a técnica seja truque (0 base, 0 mods)
+    // Se houve algum investimento (PP > 0 ou Mods > 0), o custo final nunca pode ser menor que 1.
+    const houveInvestimento = (ppBase > 0) || (rawCost > ppBase); 
+
+    if (custoFinal < 1 && houveInvestimento) {
+        custoFinal = 1;
+    }
+    
+    // Se realmente for tudo zero
+    if (rawCost <= 0) custoFinal = 0;
+
+    // 4. ATUALIZAR UI DO CARD
+    // Dados Básicos
+    document.getElementById('outNome').innerText = nome;
+    document.getElementById('outSub').innerText = isAuxiliar ? "Técnica Auxiliar" : "Técnica de Combate";
+    document.getElementById('outGrau').innerText = `${grau}º GRAU`;
+    document.getElementById('outCusto').innerText = `${custoFinal} PP`;
+    document.getElementById('outOrigem').innerText = document.getElementById('origem').value || 'Geral';
+    document.getElementById('outPrereq').innerText = document.getElementById('prereq').value || 'Nenhum';
+    document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
+
+    // Cálculo do Dano
+    let stringDano = "Variável / Nenhum";
+    if (ppBase > 0 && !document.getElementById('chkNaoOfensiva').checked) {
+        if (isAuxiliar) {
+            stringDano = `${ppBase}d10 (Cura) / ${ppBase}d6 (Área)`;
+        } else {
+            let dado = "d10";
+            if (tipoDano === "Unico") dado = (grau >= 6) ? "d12" : "d10";
+            if (tipoDano === "UnicoSalvaNenhum") dado = "d10";
+            if (tipoDano === "UnicoSalvaMetade") dado = "d8";
+            if (tipoDano === "Area") dado = "d6";
+            if (tipoDano === "AreaRestrita") dado = "d8";
+            if (document.getElementById('chkIndomavel').checked && tipoDano === "Area") dado = "d8";
+            stringDano = `${ppBase}${dado}`;
+        }
+    } else if (document.getElementById('chkNaoOfensiva').checked) {
+        stringDano = "Não Causa Dano";
+    }
+    document.getElementById('outDano').innerText = stringDano;
+
+    // --- Alcance e Ação (ATUALIZADO) ---
+    let acaoReq = isAuxiliar ? "Ação Bônus / Reação" : "Ação Poderosa";
+    
+    // Modificadores que alteram o tempo de ação
+    if (!isAuxiliar && document.getElementById('chkRapida') && document.getElementById('chkRapida').checked) {
+        acaoReq = "Ação Bônus / Reação";
+    }
+    // Se for Auxiliar MAS tiver Técnica Demorada, volta para Ação Poderosa
+    if (isAuxiliar && document.getElementById('chkDemorada') && document.getElementById('chkDemorada').checked) {
+        acaoReq = "Ação Poderosa";
+    }
+    document.getElementById('outAcao').innerText = acaoReq;
+
+    // Cálculo exato de Alcance (Buscando pelos IDs para evitar conflito no DOM)
+    let inputAumentarAlcance = document.getElementById('aumentarAlcance');
+    let inputReduzirArea = document.getElementById('reduzirArea');
+    
+    let alcanceAdicional = (inputAumentarAlcance ? parseInt(inputAumentarAlcance.value) || 0 : 0) * 6;
+    let alcanceReduzido = (inputReduzirArea ? parseInt(inputReduzirArea.value) || 0 : 0) * 6;
+    
+    // Adicionar Empurrão ao Alcance/Efeito? Não, Empurrão é efeito. Alcance é alcance.
+    // Mas "Aumentar Área" e "Largura da Linha" alteram a geometria.
+    // Vamos calcular o alcance base + extras.
+    
+    let alcanceCalculado = 0;
+    if(stats) {
+        alcanceCalculado = stats[formatoArea.toLowerCase()] || 0;
+    }
+    
+    // Modificador de Alcance (+6m por ponto)
+    alcanceCalculado += (parseInt(document.getElementById('aumentarAlcance').value) || 0) * 6;
+    
+    let textoAlcance = `${alcanceCalculado}m (${formatoArea})`;
+    
+    // Detalhes extras de geometria
+    const modEmpurrao = parseInt(document.getElementById('modEmpurrao').value) || 0;
+    const modLargura = parseInt(document.getElementById('modLarguraLinha').value) || 0;
+    const modArea = parseInt(document.getElementById('modAumentarArea').value) || 0;
+
+    let extras = [];
+    if(modEmpurrao > 0) extras.push(`Empurrão ${modEmpurrao * 1.5}m`);
+    if(modLargura > 0) extras.push(`Largura +${modLargura * 1.5}m`);
+    if(modArea > 0) extras.push(`Área +${modArea * 1.5}m`);
+
+    if(extras.length > 0) {
+        textoAlcance += " / " + extras.join(" / ");
+    }
+    
+    if (alcanceCalculado <= 0 && formatoArea === 'Linha') textoAlcance = "Toque";
+    document.getElementById('outAlcance').innerText = textoAlcance;
+
+    // ... (rest of function)
+
+    // Crítico (already declared and set above)
+    if(document.getElementById('chkCrit19').checked) crit = 19;
+    if(document.getElementById('chkCrit18').checked) crit = 18;
+    document.getElementById('outCrit').innerText = `${crit} / x2`;
+
+    // Validador Rigoroso de Ataque Combinado
+    let hasConditions = parseInt(document.getElementById('condicoesCusto').value) > 0 || document.getElementById('chkCondArea').checked;
+    let isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
+    
+    let combinadoPossivel = false;
+    if (!isAuxiliar && ppBase > 0 && !hasConditions && !isNaoOfensiva && acaoReq === "Ação Poderosa") {
+        if(formatoArea !== 'Esfera') {
+            combinadoPossivel = true;
+        }
+    }
+    
+    let spanCombinado = document.getElementById('outCombinado');
+    spanCombinado.innerText = combinadoPossivel ? "Possível" : "Impossível";
+    spanCombinado.style.color = combinadoPossivel ? "#2ecc71" : "#ff6b6b";
+
+    // Atualizar Cores Temáticas
+    document.querySelector('.tech-header').style.borderBottomColor = corTema;
+    document.querySelector('.tech-grau').style.color = corTema;
+    document.querySelector('.tech-stats').style.borderLeftColor = corTema;
+    document.querySelectorAll('.stat-item span:first-child').forEach(el => el.style.color = corTema);
+
+    // Validador Final de Custo
+    const statusBox = document.getElementById('statusBox');
+    if (custoFinal > maxPPPermitido) {
+        statusBox.style.display = 'block';
+        statusBox.className = 'status-msg msg-error';
+        statusBox.innerText = `⚠️ Custo Excedido! Custo final (${custoFinal} PP) passou do limite do ${grau}º Grau (${maxPPPermitido} PP).`;
+    } else {
+        statusBox.style.display = 'block';
+        statusBox.className = 'status-msg msg-ok';
+        statusBox.innerHTML = `✅ Técnica Válida! Custo Base (${rawCost}) - Reduções (${reducoes}) = <b>${custoFinal} PP Final</b>.`;
+    }
+
+    // UX: Opacidade do box ofensivo se for Auxiliar
+    document.getElementById('boxOfensivo').style.opacity = isAuxiliar ? "0.4" : "1";
+    document.getElementById('boxOfensivo').style.pointerEvents = isAuxiliar ? "none" : "auto";
+}
+
+// SISTEMA DE GRAVAÇÃO (LOCALSTORAGE)
+function salvarTecnica() {
+    const nome = document.getElementById('nome').value;
+    if(!nome || nome === 'TÉCNICA SEM NOME') return alert("Dê um nome à técnica antes de guardar!");
+    
+    let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+    
+    // Guarda o estado atual de todos os inputs num objeto
+    let dados = {};
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        if(el.id && el.id !== 'tecnicasSalvas') {
+            dados[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+        }
+    });
+
+    tecnicas[nome] = dados;
+    localStorage.setItem('op_rpg_tecnicas', JSON.stringify(tecnicas));
+    atualizarDropdownTecnicas();
+    alert(`Técnica "${nome}" guardada com sucesso no seu grimório!`);
+}
+
+function atualizarDropdownTecnicas() {
+    const select = document.getElementById('tecnicasSalvas');
+    select.innerHTML = '<option value="">-- Carregar Técnica Guardada --</option>';
+    let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+    
+    Object.keys(tecnicas).forEach(nome => {
+        let opt = document.createElement('option');
+        opt.value = nome;
+        opt.innerText = nome;
+        select.appendChild(opt);
+    });
+}
+
+function carregarTecnica() {
+    const nomeSelecionado = document.getElementById('tecnicasSalvas').value;
+    if(!nomeSelecionado) return;
+    
+    let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+    let dados = tecnicas[nomeSelecionado];
+    
+    if(dados) {
+        Object.keys(dados).forEach(id => {
+            let el = document.getElementById(id);
+            if(el) {
+                if(el.type === 'checkbox') el.checked = dados[id];
+                else el.value = dados[id];
+            }
+        });
+        calculateOPRules(); // Recalcula a interface
+    }
+}
+
+function apagarTecnica() {
+    const nomeSelecionado = document.getElementById('tecnicasSalvas').value;
+    if(!nomeSelecionado) return;
+    
+    if(confirm(`Tem a certeza que deseja apagar a técnica "${nomeSelecionado}"?`)) {
+        let tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+        delete tecnicas[nomeSelecionado];
+        localStorage.setItem('op_rpg_tecnicas', JSON.stringify(tecnicas));
+        atualizarDropdownTecnicas();
+    }
+}
+
+// Exportar Imagem
+function exportImage() {
+    const card = document.getElementById('cardToExport');
+    html2canvas(card, { backgroundColor: '#121214', scale: 3, borderRadius: 8 }).then(canvas => {
+        const link = document.createElement('a');
+        let nomeArquivo = document.getElementById('nome').value.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'tecnica';
+        link.download = `${nomeArquivo}_oprpg.png`; link.href = canvas.toDataURL('image/png'); link.click();
+    });
+}
+
+// Iniciar o sistema
+window.onload = () => {
+    atualizarDropdownTecnicas();
+    calculateOPRules();
+};
+
+// --- FUNCIONALIDADES DE APP WEB ---
+
+// 1. Limpar Formulário (Nova Técnica)
+function novaTecnica() {
+    // Fazer reset aos campos de texto e selects
+    document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+    document.querySelectorAll('input[type="number"]').forEach(el => el.value = el.defaultValue || 0);
+    document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+    
+    // Desmarcar todas as checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+    
+    // Repor valores por omissão importantes
+    document.getElementById('nome').value = 'Nova Técnica';
+    document.getElementById('ppBase').value = 2;
+    document.getElementById('corTema').value = '#d93838';
+    document.getElementById('prereq').value = 'Nenhum';
+    document.getElementById('origem').value = 'Geral';
+    
+    calculateOPRules();
+}
+
+// 2. Exportar Grimório (Backup Seguro)
+function exportarBackup() {
+    let tecnicas = localStorage.getItem('op_rpg_tecnicas');
+    if (!tecnicas || tecnicas === '{}') return alert("Não tem técnicas guardadas para exportar!");
+    
+    // Criar um ficheiro virtual (Blob)
+    let blob = new Blob([tecnicas], {type: "application/json"});
+    let link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "Grimorio_OP_RPG.json";
+    link.click();
+}
+
+// 3. Importar Grimório (Restaurar Backup)
+function importarBackup(event) {
+    let file = event.target.files[0];
+    if (!file) return;
+    
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            // Validar se é um JSON válido
+            let jsonObj = JSON.parse(e.target.result); 
+            localStorage.setItem('op_rpg_tecnicas', JSON.stringify(jsonObj));
+            atualizarDropdownTecnicas();
+            alert("Grimório restaurado com sucesso!");
+        } catch (err) {
+            alert("Erro: O ficheiro selecionado não é um backup válido.");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Limpar o input de ficheiro
+}
