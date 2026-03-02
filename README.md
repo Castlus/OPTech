@@ -49,7 +49,7 @@ A interface bloqueia e acinzenta automaticamente modificadores inaplicáveis com
 
 | Condição | Modificadores bloqueados |
 |---|---|
-| Formato ≠ Linha | Aumentar Alcance, Largura da Linha |
+| Formato ≠ Linha | Aumentar Alcance |
 | Formato = Linha | Aumentar Área, Reduzir Área |
 | Alvo não é Jogada de Ataque | Aumentar Acerto, Crítico |
 | Técnica Auxiliar | Causar Dano, Acerto Automático, Ataque de Cerco, Ataques Múltiplos, Tipo de Dano, Dano Fixo, Técnica Rápida |

@@ -346,7 +346,6 @@ function calculateOPRules() {
     const inputAumentarAlcance = parseInt(document.getElementById('aumentarAlcance')?.value) || 0;
     const inputAumentarArea   = parseInt(document.getElementById('modAumentarArea')?.value) || 0;
     const inputReduzirArea    = parseInt(document.getElementById('reduzirArea')?.value) || 0;
-    const inputLarguraLinha   = parseInt(document.getElementById('modLarguraLinha')?.value) || 0;
     const baseAlcance = stats ? (stats[formatoArea.toLowerCase()] || 0) : 0;
 
     let alcanceFinalVisual = baseAlcance;
@@ -356,14 +355,11 @@ function calculateOPRules() {
         textoAlcance = 'Pessoal / Toque';
     } else if (formatoArea === 'Linha') {
         alcanceFinalVisual += (inputAumentarAlcance * 6); // Regra não permite redução de comprimento na Linha
-        const largura = 1.5 + (inputLarguraLinha * 1.5);
         if (alcanceFinalVisual <= 0) {
             alcanceFinalVisual = 0;
             textoAlcance = 'Pessoal / Toque';
         } else {
-            textoAlcance = `${alcanceFinalVisual}m de comp.`;
-            if (inputLarguraLinha > 0) textoAlcance += ` x ${largura}m larg.`;
-            textoAlcance += ' (Linha)';
+            textoAlcance = `${alcanceFinalVisual}m de comp. (Linha)`;
         }
     } else if (formatoArea === 'Cone') {
         alcanceFinalVisual += (inputAumentarArea * 3) - (inputReduzirArea * 9);
@@ -612,7 +608,6 @@ function calculateOPRules() {
     // 1. Formato da Área (Linha vs Cone/Esfera) + Área Restrita bloqueia aumento de alcance/área
     toggleUX('reduzirArea',      !isLinha && !isAreaRest, 'Reduzir Área não se aplica a Linha; e Área Restrita já tem tamanho fixo');
     toggleUX('aumentarAlcance',   isLinha && !isAreaRest, 'Aplicável apenas ao formato de Linha (e não em Área Restrita)');
-    toggleUX('modLarguraLinha',   isLinha && !isAreaRest, 'Aplicável apenas ao formato de Linha');
     toggleUX('modAumentarArea',  !isLinha && !isAreaRest, 'Use "Aumentar Alcance" para Linha; Área Restrita não pode ter alcance aumentado');
 
     // 2. Exclusivos de Técnicas de Combate (e incompatíveis com Não Ofensiva / Criar Arma)
