@@ -305,6 +305,38 @@
             position: sticky;
             top: 20px;
         }
+        /* Mini-cards de Formas Aperfeiçoadas/Adaptadas */
+        #formasPanel {
+            display: none;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+        .mini-card {
+            background: var(--panel-bg2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: filter .15s, transform .1s, border-color .15s;
+            max-width: 160px;
+            min-width: 100px;
+        }
+        .mini-card:hover { filter: brightness(1.25); transform: translateY(-2px); }
+        .mini-card:active { transform: translateY(0); }
+        .mini-card-grau {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            opacity: .7;
+            margin-bottom: 3px;
+        }
+        .mini-card-nome {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.3;
+            word-break: break-word;
+        }
         .technique-card {
             background: linear-gradient(160deg, #1a1d28 0%, #141720 100%);
             color: var(--text-main);
@@ -587,14 +619,23 @@
             <div class="form-group"><label>Formato de Área</label><select id="formatoArea"><option value="Linha">Toque / Linha</option><option value="Cone">Cone</option><option value="Esfera">Esfera / Cilindro</option></select></div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" style="flex-direction:column; gap:6px;">
             <div class="form-group">
                 <label>Alvo / Aplicação do Dano</label>
-                <select id="tipoDano">
-                    <option value="Unico">Alvo Único (Jogada de Ataque)</option><option value="UnicoSalvaNenhum">Alvo Único (Salva - Nenhum Dano)</option>
-                    <option value="UnicoSalvaMetade">Alvo Único (Salva - Metade Dano)</option><option value="Area">Múltiplos (Área)</option>
-                    <option value="AreaRestrita">Múltiplos (Área Restrita)</option>
+                <select id="alvoDano" onchange="calculateOPRules()">
+                    <option value="Unico">Alvo Único (Jogada de Ataque)</option>
+                    <option value="Area">Múltiplos (Área)</option>
                 </select>
+            </div>
+            <div id="rowSalvaguarda" class="mod-row" style="padding-left:8px; gap:10px; align-items:center;">
+                <label><input type="checkbox" id="chkSalvaguarda" onchange="calculateOPRules()"> Com Salvaguarda</label>
+                <select id="selSalvaEfeito" onchange="calculateOPRules()" style="font-size:12px; padding:4px 8px; display:none;">
+                    <option value="Nenhum">Nenhum dano em sucesso (d10)</option>
+                    <option value="Metade">Metade do dano em sucesso (d8)</option>
+                </select>
+            </div>
+            <div id="rowAreaRestrita" class="mod-row" style="padding-left:8px; display:none;">
+                <label><input type="checkbox" id="chkAreaRestrita" onchange="calculateOPRules()"> Área Restrita (d8) — alcance não pode ser aumentado</label>
             </div>
         </div>
 
@@ -756,7 +797,17 @@
                 <div class="mod-row"><label>Aumentar CR Aliado (+2 PP / Ponto)</label> <input type="number" class="mod-mult" data-type="plus" data-cost="2" min="0" max="3" value="0"></div>
                 <div class="mod-row"><label><input type="checkbox" id="chkVooBase" class="mod" data-type="plus" value="2"> Adicionar Voo Base (9m)</label></div>
                 <div class="mod-row"><label>Voo Extra (+1 PP / 3m)</label> <input type="number" id="modVooExtra" class="mod-mult" data-type="plus" data-cost="1" min="0" value="0"></div>
-                <div class="mod-row"><label>Contenção de Dano (Área/Pessoal) (2d8)</label> <input type="number" id="modContencao" class="mod-mult" data-type="plus" data-cost="1" min="0" value="0"></div>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100%; margin: 5px 0;">
+                <div class="mod-row"><label>Dano Adicional (+1 PP / Dado, Máx 5)</label> <input type="number" id="modDadosAdicionais" class="mod-mult" data-type="plus" data-cost="1" min="0" max="5" value="0"></div>
+                <div class="mod-row"><label><input type="checkbox" id="chkCriarArma"> Criar Arma (6+ PP · 2PP/turno · Conc. obrigatória)</label></div>
+                <div class="mod-row" id="rowDadosArma" style="display:none; padding-left:16px;">
+                    <label>Dados da Arma (máx. 4d8)</label>
+                    <select id="selDadosArma" onchange="calculateOPRules()" style="font-size:12px;padding:6px;">
+                        <option value="2">2d8 — 6 PP (base)</option>
+                        <option value="3">3d8 — 8 PP</option>
+                        <option value="4">4d8 — 10 PP</option>
+                    </select>
+                </div>
                 <hr style="border: 0; border-top: 1px solid var(--border-color); width: 100%; margin: 5px 0;">
                 <div class="mod-row"><label><input type="checkbox" class="mod" data-type="plus" value="8"> Criar Lacaio Base (+8 PP)</label></div>
                 <div class="mod-row"><label>Lacaio: Aumentar CR (+2 PP / CR)</label> <input type="number" class="mod-mult" data-type="plus" data-cost="2" min="0" value="0"></div>
@@ -803,6 +854,7 @@
                 <div class="stat-item"><span id="lblDano">Efeito Base:</span> <span class="val" id="outDano">2d10</span></div>
                 <div class="stat-item"><span>Requisito:</span> <span class="val" id="outAcao">Ação Poderosa</span></div>
                 <div class="stat-item"><span>Alcance:</span> <span class="val" id="outAlcance">9m (Linha)</span></div>
+                <div class="stat-item"><span>Duração:</span> <span class="val" id="outDuracao">Instantâneo</span></div>
                 <div class="stat-item"><span>Origem:</span> <span class="val" id="outOrigem">Geral</span></div>
                 <div class="stat-item"><span>Pré-req:</span> <span class="val" id="outPrereq">Nenhum</span></div>
                 <div class="stat-item"><span>Crítico:</span> <span class="val" id="outCrit">20 / x2</span></div>
@@ -815,6 +867,7 @@
 
             <div class="tech-description" id="outDesc">Efeito da técnica...</div>
         </div>
+        <div id="formasPanel" style="display:none; flex-wrap:wrap; gap:7px;"></div>
         <div style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:10px; color:#6a7492;">
             <span>PP</span>
             <div class="pp-bar-wrap"><div id="ppBarFill" class="pp-bar-fill"></div></div>
@@ -825,6 +878,13 @@
             <button class="btn-export btn-claro" style="flex:1; width:auto;" onclick="exportImageClaro()">🖨️ Claro</button>
             <button class="btn-export btn-txt" style="flex:1; width:auto;" onclick="exportarTXT()">📄 TXT</button>
             <button class="btn-export btn-copy" id="btnCopiar" style="flex:1; width:auto;" onclick="copiarParaClipboard()">📋 Copiar</button>
+        </div>
+        <div style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Extrato de PP</span>
+                <button onclick="copiarExtrato(this)" style="font-size:11px; padding:3px 10px; border:1px solid var(--border-color); border-radius:5px; background:var(--input-bg); color:var(--text-main); cursor:pointer; transition:filter .15s;" onmouseover="this.style.filter='brightness(1.3)'" onmouseout="this.style.filter=''">📋 Copiar</button>
+            </div>
+            <div id="extratoBox" style="font-size:11.5px; color:var(--text-muted); line-height:1.6;"></div>
         </div>
     </div>
 

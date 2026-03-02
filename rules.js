@@ -27,10 +27,36 @@ function calculateOPRules() {
     const grau = parseInt(document.getElementById('grau').value);
     const categoria = document.getElementById('categoria').value;
     const formatoArea = document.getElementById('formatoArea').value;
-    const tipoDano = document.getElementById('tipoDano').value;
     const corTema = document.getElementById('corTema').value;
     const isAuxiliar = (categoria === 'Auxiliar');
     const isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
+    const isCriarArma  = document.getElementById('chkCriarArma')?.checked || false;
+
+    // --- Derivar tipoDano dos novos controles ---
+    const alvoDano    = document.getElementById('alvoDano')?.value || 'Unico';
+    const chkSalva    = document.getElementById('chkSalvaguarda')?.checked || false;
+    const salvaEfeito = document.getElementById('selSalvaEfeito')?.value || 'Nenhum';
+    const isAreaRest  = document.getElementById('chkAreaRestrita')?.checked || false;
+    // Visibilidade dos sub-controles
+    const rowSalvaEl = document.getElementById('rowSalvaguarda');
+    const rowAREl    = document.getElementById('rowAreaRestrita');
+    const selSalvaEl = document.getElementById('selSalvaEfeito');
+    if (rowSalvaEl) rowSalvaEl.style.display = (alvoDano === 'Unico') ? 'flex' : 'none';
+    if (rowAREl)    rowAREl.style.display    = (alvoDano === 'Area')  ? 'flex' : 'none';
+    if (selSalvaEl) selSalvaEl.style.display = (alvoDano === 'Unico' && chkSalva) ? '' : 'none';
+    // Valor derivado de tipoDano
+    let tipoDano;
+    if (alvoDano === 'Unico') {
+        if (chkSalva && salvaEfeito === 'Metade') tipoDano = 'UnicoSalvaMetade';
+        else if (chkSalva)                        tipoDano = 'UnicoSalvaNenhum';
+        else                                      tipoDano = 'Unico';
+    } else {
+        tipoDano = isAreaRest ? 'AreaRestrita' : 'Area';
+    }
+    const dadosArma    = isCriarArma ? (parseInt(document.getElementById('selDadosArma')?.value) || 2) : 0;
+    // Mostrar/ocultar seletor de dados de Criar Arma
+    const rowDadosArma = document.getElementById('rowDadosArma');
+    if (rowDadosArma) rowDadosArma.style.display = isCriarArma ? 'flex' : 'none';
     // 1. Capturar Dados de PP Base Híbridos
     let ppDano     = parseInt(document.getElementById('ppDano').value)     || 0;
     let ppCura     = parseInt(document.getElementById('ppCura').value)     || 0;
@@ -55,8 +81,8 @@ function calculateOPRules() {
     ppPVTemp   = parseInt(document.getElementById('ppPVTemp').value)   || 0;
     ppBloqueio = parseInt(document.getElementById('ppBloqueio').value) || 0;
 
-    // Técnica Não Ofensiva: zera ppDano da calculação (não causa dano), mas preserva o valor no campo
-    if (isNaoOfensiva) {
+    // Técnica Não Ofensiva / Criar Arma: zera ppDano da calculação (não causa dano direto), mas preserva o valor no campo
+    if (isNaoOfensiva || isCriarArma) {
         ppDano = 0;
     }
 
@@ -104,6 +130,12 @@ function calculateOPRules() {
     }
     
     if(document.getElementById('chkRapida').checked) rawCost += grau;
+    // Criar Arma: 6 PP base (2d8) + 2 PP por d8 adicional (máx. 4d8). Força Concentração sem conceder desconto.
+    if (isCriarArma) {
+        rawCost += 6 + (dadosArma - 2) * 2;
+        const elConc = document.getElementById('chkConcentracao');
+        if (elConc) elConc.checked = true;
+    }
     if(document.getElementById('chkDanoContinuo').checked) rawCost += Math.ceil(grau / 2);
     if(document.getElementById('chkDanoInsistente').checked) rawCost += Math.ceil(grau / 2);
     // --- Cálculo Rigoroso de Condição em Área ---
@@ -194,29 +226,52 @@ function calculateOPRules() {
         reducoes += isAuxiliar ? 1 : 2;
     }
 
+    // Criar Arma: Concentração é obrigatória mas NÃO concede redução de PP
+    if (isCriarArma && document.getElementById('chkConcentracao')?.checked) {
+        reducoes -= 2;
+    }
+
     // A GRANDE REGRA: A Redução Base de Categoria SÓ se aplica a Estilos de Combate!
     if (fonteTecnica === 'Estilo') {
         reducoes += isAuxiliar ? 1 : Math.max(1, Math.floor(grau / 2));
     }
 
-    // CUSTO FINAL
-    let custoFinal = rawCost - reducoes;
-    
-    // Regra de Ouro: O custo mínimo é 1 PP, a menos que a técnica seja truque (0 base, 0 mods)
-    // Se houve algum investimento (PP > 0 ou Mods > 0), o custo final nunca pode ser menor que 1.
-    const houveInvestimento = (ppTotal > 0) || (rawCost > ppTotal);
-
-    if (custoFinal < 1 && houveInvestimento) {
-        custoFinal = 1;
-    }
-    
-    // Se realmente for tudo zero
-    if (rawCost <= 0) custoFinal = 0;
+    // CUSTO FINAL — mínimo sempre 1 PP, sem exceções
+    let custoFinal = Math.max(1, rawCost - reducoes);
 
     // 4. ATUALIZAR UI DO CARD
     // Dados Básicos
     document.getElementById('outNome').innerText = nome;
     document.getElementById('outSub').innerText = isAuxiliar ? "Técnica Auxiliar" : "Técnica de Combate";
+
+    // Mini-cards de Formas Aperfeiçoadas/Adaptadas
+    {
+        const formasPanel = document.getElementById('formasPanel');
+        if (formasPanel) {
+            const tecnicasSalvas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+            const formas = Object.entries(tecnicasSalvas).filter(([, d]) =>
+                d.chkAperfeicoada && (d.nomeTecnicaOriginal || '').trim() === nome.trim()
+            );
+            formasPanel.innerHTML = '';
+            if (formas.length > 0) {
+                formasPanel.style.display = 'flex';
+                formas.forEach(([formaName, fd]) => {
+                    const cor = fd.corTema || '#5c85b3';
+                    const grauNum = parseInt(fd.grau) || 1;
+                    const div = document.createElement('div');
+                    div.className = 'mini-card';
+                    div.style.borderColor = cor;
+                    div.title = `Carregar: ${formaName}`;
+                    div.innerHTML = `<div class="mini-card-grau" style="color:${cor}">${grauNum}º GRAU &mdash; FORMA</div><div class="mini-card-nome">${formaName}</div>`;
+                    div.onclick = () => carregarTecnicaPorNome(formaName);
+                    formasPanel.appendChild(div);
+                });
+            } else {
+                formasPanel.style.display = 'none';
+            }
+        }
+    }
+
     const isAperfeicoada = document.getElementById('chkAperfeicoada').checked;
     const nomeOriginal = (document.getElementById('nomeTecnicaOriginal')?.value || '').trim();
     const elOriginal = document.getElementById('outOriginal');
@@ -230,7 +285,13 @@ function calculateOPRules() {
     document.getElementById('outGrau').innerText = `${grau}º GRAU`;
     document.getElementById('outCusto').innerText = `${custoFinal} PP`;
     document.getElementById('outOrigem').innerText = document.getElementById('origem')?.value || 'Geral';
-    document.getElementById('outPrereq').innerText = document.getElementById('prereq').value || 'Nenhum';
+    const prereqVal = (document.getElementById('prereq').value || '').trim();
+    const prereqVazio = !prereqVal || prereqVal.toLowerCase() === 'nenhum';
+    const elPrereq = document.getElementById('outPrereq');
+    if (elPrereq) {
+        elPrereq.innerText = prereqVazio ? 'Nenhum' : prereqVal;
+        elPrereq.parentElement.style.display = prereqVazio ? 'none' : 'flex';
+    }
     document.getElementById('outDesc').innerHTML = (document.getElementById('desc').value || '').replace(/\n/g, '<br>');
 
     // --- Cálculo Híbrido do Efeito Base Visual ---
@@ -245,15 +306,22 @@ function calculateOPRules() {
     if (tipoDano === "AreaRestrita") dado = "d8";
     if (document.getElementById('chkIndomavel').checked && tipoDano === "Area") dado = "d8";
 
+    // Cura e PV Temp: d10 alvo único, d6 múltiplos alvos (área)
+    // Bloqueio: 2d8/ponto individual, 1d8/ponto coletivo (área)
+    const isMultiplosAlvos = tipoDano === 'Area' || tipoDano === 'AreaRestrita';
+    const dadoCura      = isMultiplosAlvos ? 'd6' : 'd10';
+    const dadosBloqueio = isMultiplosAlvos ? `${ppBloqueio}d8` : `${ppBloqueio * 2}d8`;
+
     if (ppDano     > 0 && !isNaoOfensiva) efeitosArr.push(`${ppDano}${dado}${stringBonusDano} (Dano)`);
-    if (ppCura     > 0)                   efeitosArr.push(`${ppCura}${dado}${stringBonusDano} (Cura)`);
-    if (ppPVTemp   > 0)                   efeitosArr.push(`${ppPVTemp}${dado}${stringBonusDano} (PV Temp)`);
-    if (ppBloqueio > 0)                   efeitosArr.push(`${ppBloqueio * 2}d8${stringBonusDano} (Bloqueio)`);
+    if (ppCura     > 0)                   efeitosArr.push(`${ppCura}${dadoCura} (Cura)`);
+    if (ppPVTemp   > 0)                   efeitosArr.push(`${ppPVTemp}${dadoCura} (PV Temp)`);
+    if (ppBloqueio > 0)                   efeitosArr.push(`${dadosBloqueio} (Bloqueio)`);
+    if (isCriarArma)                      efeitosArr.push(`${dadosArma}d8 (Arma Criada)`);
 
     let stringDano = "Nenhum";
     if (efeitosArr.length > 0) {
         stringDano = efeitosArr.join(' + ');
-    } else if (isNaoOfensiva) {
+    } else if (isNaoOfensiva && !isCriarArma) {
         stringDano = "Não Causa Dano";
     }
     document.getElementById('outDano').innerText = stringDano;
@@ -270,6 +338,8 @@ function calculateOPRules() {
     if (isAuxiliar && document.getElementById('chkDemorada') && document.getElementById('chkDemorada').checked) {
         acaoReq = "Ação Poderosa";
     }
+    // Criar Arma sempre exige Ação Bônus (obrigatório pela regra)
+    if (isCriarArma) acaoReq = "Ação Bônus / Reação";
     document.getElementById('outAcao').innerText = acaoReq;
 
     // --- Cálculo Visual de Alcance e Área ---
@@ -317,7 +387,6 @@ function calculateOPRules() {
     const modEmpurrao      = parseInt(document.getElementById('modEmpurrao')?.value) || 0;
     const modMovimento     = parseInt(document.getElementById('modMovimento')?.value) || 0;
     const modVooExtra      = parseInt(document.getElementById('modVooExtra')?.value) || 0;
-    const modContencao     = parseInt(document.getElementById('modContencao')?.value) || 0;
     const modAcerto        = parseInt(document.getElementById('modAcerto')?.value) || 0;
     const modCDExtraVisual = parseInt(document.getElementById('modAumentarCD')?.value) || 0; // ID Corrigido!
     const minProlongadosCard = parseInt(document.getElementById('duracaoProlongada')?.value) || 0;
@@ -327,19 +396,23 @@ function calculateOPRules() {
     if (modMovimento > 0) extras.push(`Mov. +${modMovimento * 3}m`);
     if (document.getElementById('chkVooBase')?.checked) extras.push('Voo Base');
     if (modVooExtra  > 0) extras.push(`Voo +${modVooExtra * 3}m`);
-    if (modContencao > 0) extras.push(`Contenção ${modContencao * 2}d8`);
     if (modAcerto    > 0) extras.push(`Acerto +${modAcerto}`);
     if (modCDExtraVisual > 0) extras.push(`CD +${modCDExtraVisual}`);
-
-    // Status de duração visível na ficha
-    if (minProlongadosCard > 0) extras.push(`Duração: ${minProlongadosCard} min`);
+    const modDadosAdicionais = parseInt(document.getElementById('modDadosAdicionais')?.value) || 0;
+    if (modDadosAdicionais > 0) extras.push(`+${modDadosAdicionais}d (Dano Adicional)`);
     if (document.getElementById('chkCuraProlongada')?.checked) extras.push('Cura Prolongada');
-    if (document.getElementById('chkConcentracao')?.checked) extras.push('Sustentada (Conc.)');
     // Obs: Dano Fixo já aparece na linha de Dano Principal (2d10 + 3)
 
     if (extras.length > 0) textoAlcance += ' / ' + extras.join(' / ');
 
     document.getElementById('outAlcance').innerText = textoAlcance;
+
+    // Duração no card (linha própria)
+    const isConcentracao = document.getElementById('chkConcentracao')?.checked || false;
+    const partesDuracao = [];
+    if (minProlongadosCard > 0) partesDuracao.push(`Até ${minProlongadosCard} min`);
+    if (isConcentracao) partesDuracao.push('Concentração');
+    document.getElementById('outDuracao').innerText = partesDuracao.length > 0 ? partesDuracao.join(', ') : 'Instantâneo';
 
     // --- Cálculo Oficial da CD (pág. 236) e Ocultação Inteligente ---
     const spanCD          = document.getElementById('outCD');
@@ -384,6 +457,7 @@ function calculateOPRules() {
     if (elConds) {
         elConds.innerText = nomesConds.length > 0 ? nomesConds.join(' | ') : 'Nenhuma';
         elConds.style.color = nomesConds.length > 0 ? '#f1c40f' : '';
+        elConds.parentElement.style.display = nomesConds.length > 0 ? 'flex' : 'none';
     }
 
     let hasConditions = ppCond1 > 0 || ppCond2 > 0 || document.getElementById('chkCondArea').checked;
@@ -460,6 +534,7 @@ function calculateOPRules() {
     if (tipoDanoPago === 2) _em.push(`+${Math.max(1, Math.ceil(grau/2))} PP \u2014 Tipo de Dano (Din\u00e2mico)`);
     if (tipoDanoPago === 3) _em.push(`+${Math.max(1, grau)} PP \u2014 Tipo de Dano (Verdadeiro)`);
     if (minProlongados > 0) _em.push(`+${4 + (minProlongados-1)*2} PP \u2014 Dura\u00e7\u00e3o Prolongada (${minProlongados} min)`);
+    if (isCriarArma) _em.push(`+${6 + (dadosArma-2)*2} PP \u2014 Criar Arma (${dadosArma}d8, 2PP/turno)`);
 
     document.querySelectorAll('.mod[data-type="minus"]:checked').forEach(chk => {
         const txt = chk.closest('.mod-row')?.querySelector('label')?.textContent?.trim() || chk.id;
@@ -480,22 +555,29 @@ function calculateOPRules() {
 
     const _sec = (title, items, color) => items.length
         ? `<div style="margin-top:5px"><span style="opacity:.6;font-size:10px;text-transform:uppercase;letter-spacing:.5px">${title}</span><br>${items.map(i => `<span style="color:${color}">${i}</span>`).join('<br>')}</div>` : '';
-    const _extratoHTML = _sec('Efeitos Base', _eb, '#7ec8e3')
-        + _sec('Modificadores (+)', _em, '#9be09b')
-        + _sec('Redu\u00e7\u00f5es (\u2212)', _er, '#ff9e9e')
-        + `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.2)"><b>Total: ${rawCost} \u2212 ${reducoes} = ${custoFinal} PP</b></div>`;
 
     // Validador Final de Custo
     const statusBox = document.getElementById('statusBox');
     statusBox.style.display = 'block';
-    const _extratoToggle = `<details style="margin-top:4px;font-weight:normal;cursor:pointer"><summary style="opacity:.7;font-size:11px">\ud83d\udccb Ver extrato de PP</summary>${_extratoHTML}</details>`;
     if (custoFinal > maxPPPermitido) {
         statusBox.className = 'status-msg msg-error';
-        statusBox.innerHTML = `<div>\u26a0\ufe0f <b>Custo Excedido!</b> ${custoFinal} PP &gt; limite de ${maxPPPermitido} PP (${grau}\u00ba Grau)</div>`+ _extratoToggle;
+        statusBox.innerHTML = `<div>&#9888;&#65039; <b>Custo Excedido!</b> ${custoFinal} PP &gt; limite de ${maxPPPermitido} PP (${grau}\u00ba Grau)</div>`;
     } else {
         statusBox.className = 'status-msg msg-ok';
-        statusBox.innerHTML = `<div>\u2705 <b>T\u00e9cnica V\u00e1lida!</b> ${custoFinal} PP / ${maxPPPermitido} PP m\u00e1x.</div>` + _extratoToggle;
+        statusBox.innerHTML = `<div>&#9989; <b>T\u00e9cnica V\u00e1lida!</b> ${custoFinal} PP / ${maxPPPermitido} PP m\u00e1x.</div>`;
     }
+
+    // Extrato de PP no painel do card
+    const extratoBox = document.getElementById('extratoBox');
+    if (extratoBox) {
+        extratoBox.innerHTML = _sec('Efeitos Base', _eb, '#7ec8e3')
+            + _sec('Modificadores (+)', _em, '#9be09b')
+            + _sec('Redu\u00e7\u00f5es (\u2212)', _er, '#ff9e9e')
+            + `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.15)"><b>Total: ${rawCost} \u2212 ${reducoes} = ${custoFinal} PP</b></div>`;
+    }
+
+    // Guarda os arrays para uso no copiar
+    window._extratoData = { eb: _eb, em: _em, er: _er, rawCost, reducoes, custoFinal };
 
     // --- UX: Bloqueios Inteligentes de Regras ---
     const isLinha       = formatoArea === 'Linha';
@@ -527,36 +609,70 @@ function calculateOPRules() {
         }
     }
 
-    // 1. Formato da Área (Linha vs Cone/Esfera)
-    toggleUX('reduzirArea',      !isLinha, 'Reduzir Área não se aplica a Linha (apenas Cone/Esfera/Cilindro)');
-    toggleUX('aumentarAlcance',   isLinha, 'Aplicável apenas ao formato de Linha');
-    toggleUX('modLarguraLinha',   isLinha, 'Aplicável apenas ao formato de Linha');
-    toggleUX('modAumentarArea',  !isLinha, 'Use "Aumentar Alcance" para o formato Linha');
+    // 1. Formato da Área (Linha vs Cone/Esfera) + Área Restrita bloqueia aumento de alcance/área
+    toggleUX('reduzirArea',      !isLinha && !isAreaRest, 'Reduzir Área não se aplica a Linha; e Área Restrita já tem tamanho fixo');
+    toggleUX('aumentarAlcance',   isLinha && !isAreaRest, 'Aplicável apenas ao formato de Linha (e não em Área Restrita)');
+    toggleUX('modLarguraLinha',   isLinha && !isAreaRest, 'Aplicável apenas ao formato de Linha');
+    toggleUX('modAumentarArea',  !isLinha && !isAreaRest, 'Use "Aumentar Alcance" para Linha; Área Restrita não pode ter alcance aumentado');
 
-    // 2. Exclusivos de Técnicas de Combate (e incompatíveis com Não Ofensiva)
-    toggleUX('chkDano',       isCombate,                      'Técnicas Auxiliares não causam dano diretamente');
-    toggleUX('chkAcertoAuto', isCombate && !isNaoOfensiva,    'Técnicas Auxiliares / Não Ofensivas não fazem jogadas de ataque');
-    toggleUX('chkCerco',      isCombate && !isNaoOfensiva,    'Técnicas Não Ofensivas não causam dano a estruturas');
-    toggleUX('chkMultiplos',  isCombate && !isNaoOfensiva,    'Técnicas Não Ofensivas não realizam ataques múltiplos');
-    toggleUX('tipoDanoPago',  isCombate && !isNaoOfensiva,    'Técnicas Auxiliares / Não Ofensivas não causam dano');
-    toggleUX('modDanoFixo',   isCombate && !isNaoOfensiva,    'Técnicas Auxiliares / Não Ofensivas não possuem Dano Fixo');
+    // 2. Exclusivos de Técnicas de Combate (e incompatíveis com Não Ofensiva / Criar Arma)
+    const naoTemDanoDireto = !isNaoOfensiva && !isCriarArma;
+    toggleUX('chkDano',       isCombate && !isNaoOfensiva && !isCriarArma, 'Técnicas Auxiliares, Não Ofensivas e Criar Arma não causam dano diretamente');
+    toggleUX('chkAcertoAuto', isCombate && naoTemDanoDireto, 'Técnicas Auxiliares / Não Ofensivas / Criar Arma não fazem jogadas de ataque');
+    toggleUX('chkCerco',      isCombate && naoTemDanoDireto, 'Técnicas sem dano direto não causam dano a estruturas');
+    toggleUX('chkMultiplos',  isCombate && naoTemDanoDireto, 'Técnicas sem dano direto não realizam ataques múltiplos');
+    toggleUX('tipoDanoPago',  isCombate && naoTemDanoDireto, 'Técnicas Auxiliares / Não Ofensivas / Criar Arma não causam dano');
+    toggleUX('modDanoFixo',   isCombate && naoTemDanoDireto, 'Técnicas sem dano direto não possuem Dano Fixo');
+    // Criar Arma: Concentração é obrigatória e fica visualmente bloqueada (checked + cinza), sem dar desconto
+    {
+        const elConc = document.getElementById('chkConcentracao');
+        if (elConc) {
+            if (isCriarArma) {
+                elConc.checked  = true;
+                elConc.disabled = true;
+                const row = elConc.closest('.mod-row');
+                if (row) { row.style.opacity = '0.5'; row.style.cursor = 'not-allowed'; row.style.pointerEvents = 'none'; }
+            } else {
+                elConc.disabled = false;
+                const row = elConc.closest('.mod-row');
+                if (row) { row.style.opacity = ''; row.style.cursor = ''; row.style.pointerEvents = ''; }
+            }
+        }
+    }
 
     // 3. Exigem Jogada de Ataque (e técnica ofensiva)
-    toggleUX('modAcerto', isAtaque && isCombate && !isNaoOfensiva, 'Exige que a técnica faça uma Jogada de Ataque com Dano');
-    toggleUX('selCrit',   isAtaque && isCombate && !isNaoOfensiva, 'Exige que a técnica faça uma Jogada de Ataque com Dano');
+    toggleUX('modAcerto', isAtaque && isCombate && naoTemDanoDireto, 'Exige que a técnica faça uma Jogada de Ataque com Dano');
+    toggleUX('selCrit',   isAtaque && isCombate && naoTemDanoDireto, 'Exige que a técnica faça uma Jogada de Ataque com Dano');
 
     // 4. Dependentes do Efeito Base (Cura / Dano)
-    toggleUX('chkCuraProlongada', isCuraAtiva,                      'Exige que o Efeito Base "Restaurar PV (Cura)" esteja ativo');
-    toggleUX('chkDanoContinuo',   isDanoAtivo && !isNaoOfensiva,    'Exige que o Efeito Base "Causar Dano" esteja ativo (e a técnica não seja Não Ofensiva)');
-    toggleUX('chkDanoInsistente', isDanoAtivo && !isNaoOfensiva,    'Exige que o Efeito Base "Causar Dano" esteja ativo (e a técnica não seja Não Ofensiva)');
+    toggleUX('chkCuraProlongada', isCuraAtiva,                    'Exige que o Efeito Base "Restaurar PV (Cura)" esteja ativo');
+    toggleUX('chkDanoContinuo',   isDanoAtivo && naoTemDanoDireto, 'Exige que o Efeito Base "Causar Dano" esteja ativo (e a técnica não seja Não Ofensiva/Criar Arma)');
+    toggleUX('chkDanoInsistente', isDanoAtivo && naoTemDanoDireto, 'Exige que o Efeito Base "Causar Dano" esteja ativo (e a técnica não seja Não Ofensiva/Criar Arma)');
 
     // 5. Exigem Teste de Resistência / Salvaguarda
     toggleUX('chkCirurgico',  temSalvaUX, 'Controle Cirúrgico exige que a técnica imponha uma Salvaguarda');
     toggleUX('modAumentarCD', temSalvaUX, 'Aumentar CD exige que a técnica imponha uma Salvaguarda');
 
     // 6. Miscelânea
-    toggleUX('chkRapida',   isCombate,  'Técnicas Auxiliares já são usadas como Ação Bônus/Reação');
-    toggleUX('chkDominada', ppTotal > 0, 'Técnica Dominada exige investimento de PP em algum Efeito Base');
+    toggleUX('chkRapida',          isCombate,   'Técnicas Auxiliares já são usadas como Ação Bônus/Reação');
+    toggleUX('chkDominada',        ppTotal > 0,  'Técnica Dominada exige investimento de PP em algum Efeito Base');
+    toggleUX('modDadosAdicionais', isAuxiliar,   'Dano Adicional só está disponível para Técnicas Auxiliares');
+
+    // Sincronizar ppDano com o estado final de chkDano (pode ter sido desabilitado por toggleUX)
+    {
+        const chkDanoEl = document.getElementById('chkDano');
+        const ppDanoEl  = document.getElementById('ppDano');
+        if (chkDanoEl && ppDanoEl) {
+            const danoAtivo = !chkDanoEl.disabled && chkDanoEl.checked;
+            ppDanoEl.disabled = !danoAtivo;
+            if (!danoAtivo) ppDanoEl.value = 0;
+            const stpDano = ppDanoEl.parentElement;
+            if (stpDano) {
+                stpDano.style.opacity = danoAtivo ? '1' : '.4';
+                stpDano.querySelectorAll('button').forEach(btn => btn.disabled = !danoAtivo);
+            }
+        }
+    }
 
     // 5. EFEITOS COLATERAIS no Card
     const colateraisArr = [];
@@ -575,15 +691,18 @@ function calculateOPRules() {
     if (document.getElementById('chkDevoradora')?.checked) colateraisArr.push('Devoradora');
     if (document.getElementById('chkConcentracao')?.checked) colateraisArr.push('Conc. Crucial');
     if (document.getElementById('chkDemorada')?.checked) colateraisArr.push('Demorada');
+    if (isCriarArma) colateraisArr.push('2 PP/turno (Arma Criada)');
 
     const elColaterais = document.getElementById('outColaterais');
     if (elColaterais) {
         if (colateraisArr.length > 0) {
             elColaterais.innerText = colateraisArr.join(' | ');
             elColaterais.style.color = '#ff6b6b';
+            elColaterais.parentElement.style.display = 'flex';
         } else {
             elColaterais.innerText = 'Nenhum';
             elColaterais.style.color = '';
+            elColaterais.parentElement.style.display = 'none';
         }
     }
 
@@ -697,6 +816,21 @@ function atualizarDropdownTecnicas() {
             });
         }
     });
+}
+
+function carregarTecnicaPorNome(nomeTec) {
+    const tecnicas = JSON.parse(localStorage.getItem('op_rpg_tecnicas')) || {};
+    const dados = tecnicas[nomeTec];
+    if (!dados) return;
+    Object.keys(dados).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (el.type === 'checkbox') el.checked = dados[id];
+            else el.value = dados[id];
+        }
+    });
+    syncEfeitosBase();
+    calculateOPRules();
 }
 
 function carregarTecnica() {
@@ -985,6 +1119,26 @@ function copiarParaClipboard() {
         btn.style.background = '#27ae60';
         setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2200);
     }).catch(() => alert('Erro ao copiar. Use PNG ou TXT.'));
+}
+
+function copiarExtrato(btn) {
+    const d = window._extratoData;
+    if (!d) return;
+    const sep = '─'.repeat(30);
+    const lines = [sep, '  EXTRATO DE PP', sep];
+    if (d.eb.length) { lines.push('Efeitos Base:');   d.eb.forEach(l => lines.push('  ' + l)); }
+    if (d.em.length) { lines.push('Modificadores (+):'); d.em.forEach(l => lines.push('  ' + l)); }
+    if (d.er.length) { lines.push('Reduções (−):');   d.er.forEach(l => lines.push('  ' + l)); }
+    lines.push(sep);
+    lines.push(`Total: ${d.rawCost} − ${d.reducoes} = ${d.custoFinal} PP`);
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = '✓ Copiado!';
+        btn.style.background = '#27ae60';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#27ae60';
+        setTimeout(() => { btn.innerText = orig; btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }, 2200);
+    }).catch(() => alert('Erro ao copiar.'));
 }
 
 // Inicializa o estado da UI no carregamento da página
