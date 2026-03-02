@@ -30,6 +30,7 @@ function calculateOPRules() {
     const tipoDano = document.getElementById('tipoDano').value;
     const corTema = document.getElementById('corTema').value;
     const isAuxiliar = (categoria === 'Auxiliar');
+    const isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
     // 1. Capturar Dados de PP Base Híbridos
     let ppDano     = parseInt(document.getElementById('ppDano').value)     || 0;
     let ppCura     = parseInt(document.getElementById('ppCura').value)     || 0;
@@ -53,6 +54,11 @@ function calculateOPRules() {
     ppCura     = parseInt(document.getElementById('ppCura').value)     || 0;
     ppPVTemp   = parseInt(document.getElementById('ppPVTemp').value)   || 0;
     ppBloqueio = parseInt(document.getElementById('ppBloqueio').value) || 0;
+
+    // Técnica Não Ofensiva: zera ppDano da calculação (não causa dano), mas preserva o valor no campo
+    if (isNaoOfensiva) {
+        ppDano = 0;
+    }
 
     // 2b. Mod-mults positivos: máximo = Grau (ou limite fixo do livro, o que for menor)
     document.querySelectorAll('.mod-mult[data-type="plus"]').forEach(inp => {
@@ -231,8 +237,6 @@ function calculateOPRules() {
     let efeitosArr = [];
     const modDanoFixo = parseInt(document.getElementById('modDanoFixo')?.value) || 0;
     const stringBonusDano = modDanoFixo > 0 ? ` + ${modDanoFixo}` : '';
-    const isNaoOfensiva = document.getElementById('chkNaoOfensiva').checked;
-
     let dado = "d10";
     if (tipoDano === "Unico") dado = (grau >= 6 && !isAuxiliar) ? "d12" : "d10";
     if (tipoDano === "UnicoSalvaNenhum") dado = "d10";
@@ -529,22 +533,22 @@ function calculateOPRules() {
     toggleUX('modLarguraLinha',   isLinha, 'Aplicável apenas ao formato de Linha');
     toggleUX('modAumentarArea',  !isLinha, 'Use "Aumentar Alcance" para o formato Linha');
 
-    // 2. Exclusivos de Técnicas de Combate
-    toggleUX('chkDano',       isCombate, 'Técnicas Auxiliares não causam dano diretamente');
-    toggleUX('chkAcertoAuto', isCombate, 'Técnicas Auxiliares não fazem jogadas de ataque');
-    toggleUX('chkCerco',      isCombate, 'Técnicas Auxiliares não causam dano a estruturas');
-    toggleUX('chkMultiplos',  isCombate, 'Técnicas Auxiliares não realizam ataques múltiplos');
-    toggleUX('tipoDanoPago',  isCombate, 'Técnicas Auxiliares não causam dano');
-    toggleUX('modDanoFixo',   isCombate, 'Técnicas Auxiliares não possuem Dano Fixo');
+    // 2. Exclusivos de Técnicas de Combate (e incompatíveis com Não Ofensiva)
+    toggleUX('chkDano',       isCombate,                      'Técnicas Auxiliares não causam dano diretamente');
+    toggleUX('chkAcertoAuto', isCombate && !isNaoOfensiva,    'Técnicas Auxiliares / Não Ofensivas não fazem jogadas de ataque');
+    toggleUX('chkCerco',      isCombate && !isNaoOfensiva,    'Técnicas Não Ofensivas não causam dano a estruturas');
+    toggleUX('chkMultiplos',  isCombate && !isNaoOfensiva,    'Técnicas Não Ofensivas não realizam ataques múltiplos');
+    toggleUX('tipoDanoPago',  isCombate && !isNaoOfensiva,    'Técnicas Auxiliares / Não Ofensivas não causam dano');
+    toggleUX('modDanoFixo',   isCombate && !isNaoOfensiva,    'Técnicas Auxiliares / Não Ofensivas não possuem Dano Fixo');
 
-    // 3. Exigem Jogada de Ataque
-    toggleUX('modAcerto', isAtaque && isCombate, 'Exige que a técnica faça uma Jogada de Ataque');
-    toggleUX('selCrit',   isAtaque && isCombate, 'Exige que a técnica faça uma Jogada de Ataque');
+    // 3. Exigem Jogada de Ataque (e técnica ofensiva)
+    toggleUX('modAcerto', isAtaque && isCombate && !isNaoOfensiva, 'Exige que a técnica faça uma Jogada de Ataque com Dano');
+    toggleUX('selCrit',   isAtaque && isCombate && !isNaoOfensiva, 'Exige que a técnica faça uma Jogada de Ataque com Dano');
 
     // 4. Dependentes do Efeito Base (Cura / Dano)
-    toggleUX('chkCuraProlongada', isCuraAtiva, 'Exige que o Efeito Base "Restaurar PV (Cura)" esteja ativo');
-    toggleUX('chkDanoContinuo',   isDanoAtivo, 'Exige que o Efeito Base "Causar Dano" esteja ativo');
-    toggleUX('chkDanoInsistente', isDanoAtivo, 'Exige que o Efeito Base "Causar Dano" esteja ativo');
+    toggleUX('chkCuraProlongada', isCuraAtiva,                      'Exige que o Efeito Base "Restaurar PV (Cura)" esteja ativo');
+    toggleUX('chkDanoContinuo',   isDanoAtivo && !isNaoOfensiva,    'Exige que o Efeito Base "Causar Dano" esteja ativo (e a técnica não seja Não Ofensiva)');
+    toggleUX('chkDanoInsistente', isDanoAtivo && !isNaoOfensiva,    'Exige que o Efeito Base "Causar Dano" esteja ativo (e a técnica não seja Não Ofensiva)');
 
     // 5. Exigem Teste de Resistência / Salvaguarda
     toggleUX('chkCirurgico',  temSalvaUX, 'Controle Cirúrgico exige que a técnica imponha uma Salvaguarda');
