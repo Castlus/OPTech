@@ -1077,14 +1077,15 @@ function _buildCardText() {
         [document.getElementById('lblDano').innerText, document.getElementById('outDano').innerText],
         ['Requisito',      document.getElementById('outAcao').innerText],
         ['Alcance',        document.getElementById('outAlcance').innerText],
+        ['Duração',        document.getElementById('outDuracao').innerText],
         ['Origem',         document.getElementById('outOrigem').innerText],
-        ['Pré-requisito',  document.getElementById('outPrereq').innerText],
+        _vis('outPrereq')      ? ['Pré-requisito',  document.getElementById('outPrereq').innerText]      : null,
         _vis('outCrit')        ? ['Crítico',        document.getElementById('outCrit').innerText]        : null,
         ['Atq. Combinado', document.getElementById('outCombinado').innerText],
         _vis('outResistencia') ? ['Resistência',    document.getElementById('outResistencia').innerText] : null,
         _vis('outCD')          ? ['Dif. CD',        document.getElementById('outCD').innerText]          : null,
-        ['Condições',      document.getElementById('outCondicoes').innerText],
-        ['Colaterais',     document.getElementById('outColaterais').innerText],
+        _vis('outCondicoes')   ? ['Condições',      document.getElementById('outCondicoes').innerText]   : null,
+        _vis('outColaterais')  ? ['Colaterais',     document.getElementById('outColaterais').innerText]  : null,
     ].filter(row => row && row[1] && row[1] !== '-').map(([l, v]) => `  ${(l + ':').padEnd(16)} ${v}`);
     const desc = document.getElementById('outDesc').innerText;
     return [
